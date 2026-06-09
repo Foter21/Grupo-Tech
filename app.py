@@ -7,7 +7,7 @@ db_config = {
     'host': 'localhost',
     'database': 'aso_sistema',
     'user': 'root',
-    'password':  'Helio1505$'
+    'password':  '0000'
 }
  
 def get_db_connection():
