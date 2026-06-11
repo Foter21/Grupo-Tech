@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify
 import mysql.connector
+from dotenv import load_dotenv
+load_dotenv()
  
 app = Flask(__name__)
  
@@ -322,6 +324,7 @@ def deletar_aso():
 @app.route('/api/empresa', methods=['POST'])
 def cadastrar_empresa():
     try:
+
         dados = request.get_json()
         empr  = Empresa(
             dados['nome_empresa'], dados['cnpj'], dados['email'],
