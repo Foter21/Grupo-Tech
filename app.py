@@ -1,8 +1,5 @@
 from flask import Flask, request, jsonify
 import mysql.connector
-import os
-from dotenv import load_dotenv
-load_dotenv()
  
 app = Flask(__name__)
  
@@ -10,7 +7,7 @@ db_config = {
     'host': 'localhost',
     'database': 'aso_sistema',
     'user': 'root',
-    'password': os.environ.get('DB_PASSWORD', '0000')
+    'password': '0000'
 }
  
 def get_db_connection():
