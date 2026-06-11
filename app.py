@@ -9,7 +9,7 @@ db_config = {
     'host': 'localhost',
     'database': 'aso_sistema',
     'user': 'root',
-    'password':  '0000'
+    'password': os.environ.get('DB_PASSWORD', '0000')
 }
  
 def get_db_connection():
