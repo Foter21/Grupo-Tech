@@ -1,13 +1,15 @@
 from flask import Flask, request, jsonify
 import mysql.connector
- 
+from dotenv import load_dotenv
+import os
+load_dotenv()
 app = Flask(__name__)
  
 db_config = {
-    'host': 'localhost',
-    'database': 'aso_sistema',
-    'user': 'root',
-    'password': '0000'
+    'host': os.getenv('DB_HOST'),
+    'database': os.getenv("DB_NAME"),
+    'user': os.getenv("DB_USER"),
+    'password': os.getenv("DB_PASSWORD")
 }
  
 def get_db_connection():
@@ -48,7 +50,7 @@ def tratar_erro_mysql(e):
 
 class Funcionarios:
     def __init__(self, nome, cpf, cargo, setor, email, id_empresa,
-                 data_de_admissao, celular, condicao, data_de_nascimento,
+                 data_de_admissao, celular, whatsapp, condicao, data_de_nascimento,
                  id_funcionarios=None):
         self.id_funcionarios  = id_funcionarios
         self.nome             = nome
@@ -59,6 +61,7 @@ class Funcionarios:
         self.id_empresa       = id_empresa
         self.data_de_admissao = data_de_admissao
         self.celular          = celular
+        self.whatsapp         = whatsapp
         self.condicao         = condicao
         self.data_de_nascimento = data_de_nascimento
 
@@ -110,20 +113,20 @@ def cadastrar_funcionario():
         func = Funcionarios(
             dados['nome'], dados['cpf'], dados['cargo'], dados['setor'],
             dados['email'], dados['id_empresa'], dados['data_de_admissao'],
-            dados['celular'], dados['condicao'], dados['data_de_nascimento']
+            dados['celular'], dados['whatsapp'], dados['condicao'], dados['data_de_nascimento']
         )
         conn   = get_db_connection()
         cursor = conn.cursor()
         sql = """
             INSERT INTO funcionarios
                 (nome, cpf, cargo, setor, email, id_empresa,
-                 data_de_admissao, celular, condicao, data_de_nascimento)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                 data_de_admissao, celular, whatsapp, condicao, data_de_nascimento)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """
         cursor.execute(sql, (
             func.nome, func.cpf, func.cargo, func.setor, func.email,
             func.id_empresa, func.data_de_admissao, func.celular,
-            func.condicao, func.data_de_nascimento
+            func.whatsapp, func.condicao, func.data_de_nascimento
         ))
         conn.commit()
         novo_id = cursor.lastrowid
@@ -159,7 +162,7 @@ def atualizar_funcionarios():
         func = Funcionarios(
             dados['nome'], dados['cpf'], dados['cargo'], dados['setor'],
             dados['email'], dados['id_empresa'], dados['data_de_admissao'],
-            dados['celular'], dados['condicao'], dados['data_de_nascimento'],
+            dados['celular'], dados['whatsapp'], dados['condicao'], dados['data_de_nascimento'],
             dados['id_funcionarios']
         )
         conn   = get_db_connection()
@@ -168,13 +171,13 @@ def atualizar_funcionarios():
             UPDATE funcionarios
             SET nome = %s, cpf = %s, cargo = %s, setor = %s,
                 email = %s, id_empresa = %s, data_de_admissao = %s,
-                celular = %s, condicao = %s, data_de_nascimento = %s
+                celular = %s, whatsapp = %s, condicao = %s, data_de_nascimento = %s
             WHERE id_funcionarios = %s
         """
         cursor.execute(sql, (
             func.nome, func.cpf, func.cargo, func.setor, func.email,
             func.id_empresa, func.data_de_admissao, func.celular,
-            func.condicao, func.data_de_nascimento, func.id_funcionarios
+            func.whatsapp, func.condicao, func.data_de_nascimento, func.id_funcionarios
         ))
         conn.commit()
         cursor.close()
@@ -322,7 +325,6 @@ def deletar_aso():
 @app.route('/api/empresa', methods=['POST'])
 def cadastrar_empresa():
     try:
-
         dados = request.get_json()
         empr  = Empresa(
             dados['nome_empresa'], dados['cnpj'], dados['email'],
