@@ -271,7 +271,8 @@
                 </div>
 
                 <div class="card-body p-4">
-                    <form action="/empresa" method="POST">
+                    <div id="msgEmpresa"></div>
+                    <form action="/empresa" method="POST" id="formEmpresa">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Nome da Empresa</label>
@@ -325,7 +326,8 @@
                 </div>
 
                 <div class="card-body p-4">
-                    <form action="/funcionario" method="POST">
+                    <div id="msgFuncionario"></div>
+                    <form action="/funcionario" method="POST" id="formFuncionario">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Nome Completo</label>
@@ -359,9 +361,8 @@
 
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Empresa</label>
-                                <select name="ID_empresa" class="form-select" required>
+                                <select name="ID_empresa" class="form-select" id="selectEmpresaFuncionario" required>
                                     <option value="">Selecione</option>
-                                    <option value="1">AsoConnect</option>
                                 </select>
                             </div>
 
@@ -416,22 +417,20 @@
                 </div>
 
                 <div class="card-body p-4">
-                    <form action="/aso" method="POST">
+                    <div id="msgAso"></div>
+                    <form action="/aso" method="POST" id="formAso">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Empresa</label>
-                                <select name="ID_empresa" class="form-select" required>
+                                <select name="ID_empresa" class="form-select" id="selectEmpresaAso" required>
                                     <option value="">Selecione a empresa</option>
-                                    <option value="1">AsoConnect</option>
                                 </select>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Funcionário</label>
-                                <select name="id_funcionario" class="form-select" required>
+                                <select name="id_funcionario" class="form-select" id="selectFuncionarioAso" required>
                                     <option value="">Selecione o funcionário</option>
-                                    <option value="1">Telê Santana</option>
-                                    <option value="2">Hélio Campos</option>
                                 </select>
                             </div>
 
@@ -563,9 +562,10 @@
 
                     <input type="text"
                            class="form-control border-0 bg-light"
+                           id="buscaAso"
                            placeholder="Pesquisar por funcionário, exame ou médico...">
 
-                    <button class="btn btn-aso px-4">
+                    <button class="btn btn-aso px-4" type="button" id="btnBuscarAso">
                         Buscar
                     </button>
                 </div>
@@ -578,24 +578,24 @@
         <div class="row g-3">
 
             <div class="col-md-3">
-                <select class="form-select">
-                    <option>Todos os resultados</option>
+                <select class="form-select" id="filtroResultado">
+                    <option value="">Todos os resultados</option>
                     <option>APROVADO</option>
                     <option>REPROVADO</option>
                 </select>
             </div>
 
             <div class="col-md-3">
-                <select class="form-select">
-                    <option>Todas as condições</option>
+                <select class="form-select" id="filtroCondicao">
+                    <option value="">Todas as condições</option>
                     <option>ATIVO</option>
                     <option>INATIVO</option>
                 </select>
             </div>
 
             <div class="col-md-3">
-                <select class="form-select">
-                    <option>Tipo de exame</option>
+                <select class="form-select" id="filtroTipoExame">
+                    <option value="">Tipo de exame</option>
                     <option>Admissional</option>
                     <option>Periódico</option>
                     <option>Demissional</option>
@@ -604,7 +604,7 @@
             </div>
 
             <div class="col-md-3">
-                <input type="date" class="form-control">
+                <input type="date" class="form-control" id="filtroData">
             </div>
 
         </div>
@@ -627,9 +627,16 @@
                 </tr>
             </thead>
 
-           <tbody>
+           <tbody id="corpoTabelaAso">
     {% for aso in lista_asos %}
-    <tr>
+    <tr
+        data-nome="{{ aso.Nome_funcionario|lower }}"
+        data-exame="{{ aso.Tipo_de_Exame|lower }}"
+        data-medico="{{ aso.Medico_Responsavel|lower }}"
+        data-resultado="{{ aso.Resultado }}"
+        data-condicao="{{ aso.Condicao }}"
+        data-vencimento="{{ aso.Data_de_vencimento.strftime('%Y-%m-%d') }}"
+    >
         <td class="ps-4 fw-bold text-muted">
             #{{ "%03d"|format(aso.ID_ASO) }}
         </td>
@@ -1182,6 +1189,227 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
+
+<!-- ============================================================
+     INTEGRAÇÃO FRONTEND <-> BACKEND (API Flask)
+     ============================================================ -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ── FUNÇÃO AUXILIAR: mostrar mensagem de sucesso/erro ──────────────
+    function mostrarMensagem(containerId, tipo, texto) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="alert alert-${tipo} alert-dismissible fade show mt-2" role="alert">
+                ${texto}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    }
+
+    // ── FUNÇÃO AUXILIAR: chamada genérica à API ─────────────────────────
+    async function chamarApi(url, metodo, dados) {
+        const resposta = await fetch(url, {
+            method: metodo,
+            headers: { 'Content-Type': 'application/json' },
+            body: dados ? JSON.stringify(dados) : undefined
+        });
+
+        const corpo = await resposta.json().catch(() => ({}));
+
+        if (!resposta.ok) {
+            throw new Error(corpo.erro || 'Erro ao processar a solicitação.');
+        }
+
+        return corpo;
+    }
+
+    // ── CARREGAR EMPRESAS NOS SELECTS (Funcionário e ASO) ───────────────
+    async function carregarEmpresas() {
+        try {
+            const empresas = await chamarApi('/api/empresa', 'GET');
+
+            const selects = [
+                document.getElementById('selectEmpresaFuncionario'),
+                document.getElementById('selectEmpresaAso')
+            ];
+
+            selects.forEach(function (select) {
+                if (!select) return;
+
+                // Mantém a primeira opção ("Selecione...") e remove o resto
+                const primeiraOpcao = select.querySelector('option');
+                select.innerHTML = '';
+                if (primeiraOpcao) select.appendChild(primeiraOpcao);
+
+                empresas.forEach(function (empresa) {
+                    const opcao = document.createElement('option');
+                    opcao.value = empresa.ID_Empresa ?? empresa.id_empresa;
+                    opcao.textContent = empresa.Nome_Empresa ?? empresa.nome_empresa;
+                    select.appendChild(opcao);
+                });
+            });
+        } catch (erro) {
+            console.error('Erro ao carregar empresas:', erro);
+        }
+    }
+
+    // ── CARREGAR FUNCIONÁRIOS NO SELECT DO FORMULÁRIO DE ASO ────────────
+    async function carregarFuncionarios() {
+        try {
+            const funcionarios = await chamarApi('/api/funcionarios', 'GET');
+            const select = document.getElementById('selectFuncionarioAso');
+            if (!select) return;
+
+            const primeiraOpcao = select.querySelector('option');
+            select.innerHTML = '';
+            if (primeiraOpcao) select.appendChild(primeiraOpcao);
+
+            funcionarios.forEach(function (func) {
+                const opcao = document.createElement('option');
+                opcao.value = func.ID_Funcionarios ?? func.id_funcionarios;
+                opcao.textContent = func.Nome ?? func.nome;
+                select.appendChild(opcao);
+            });
+        } catch (erro) {
+            console.error('Erro ao carregar funcionários:', erro);
+        }
+    }
+
+    carregarEmpresas();
+    carregarFuncionarios();
+
+    // ── FORMULÁRIO: CADASTRO DE EMPRESA ─────────────────────────────────
+    const formEmpresa = document.getElementById('formEmpresa');
+    if (formEmpresa) {
+        formEmpresa.addEventListener('submit', async function (evento) {
+            evento.preventDefault();
+
+            const dados = {
+                nome_empresa: formEmpresa.querySelector('[name="Nome_Empresa"]').value,
+                cnpj: formEmpresa.querySelector('[name="CNPJ"]').value,
+                email: formEmpresa.querySelector('[name="Email"]').value,
+                telefone: formEmpresa.querySelector('[name="Telefone"]').value,
+                endereco: formEmpresa.querySelector('[name="Endereco"]').value
+            };
+
+            try {
+                await chamarApi('/api/empresa', 'POST', dados);
+                mostrarMensagem('msgEmpresa', 'success', 'Empresa cadastrada com sucesso!');
+                formEmpresa.reset();
+                carregarEmpresas();
+            } catch (erro) {
+                mostrarMensagem('msgEmpresa', 'danger', erro.message);
+            }
+        });
+    }
+
+    // ── FORMULÁRIO: CADASTRO DE FUNCIONÁRIO ─────────────────────────────
+    const formFuncionario = document.getElementById('formFuncionario');
+    if (formFuncionario) {
+        formFuncionario.addEventListener('submit', async function (evento) {
+            evento.preventDefault();
+
+            const dados = {
+                nome: formFuncionario.querySelector('[name="Nome"]').value,
+                cpf: formFuncionario.querySelector('[name="CPF"]').value,
+                data_de_nascimento: formFuncionario.querySelector('[name="Data_de_nascimento"]').value,
+                cargo: formFuncionario.querySelector('[name="Cargo"]').value,
+                setor: formFuncionario.querySelector('[name="Setor"]').value,
+                email: formFuncionario.querySelector('[name="Email"]').value,
+                id_empresa: formFuncionario.querySelector('[name="ID_empresa"]').value,
+                data_de_admissao: formFuncionario.querySelector('[name="Data_de_Admissao"]').value,
+                celular: formFuncionario.querySelector('[name="Celular"]').value,
+                whatsapp: formFuncionario.querySelector('[name="WhatsApp"]').value,
+                condicao: formFuncionario.querySelector('[name="Condicao"]').value
+            };
+
+            try {
+                await chamarApi('/api/funcionarios', 'POST', dados);
+                mostrarMensagem('msgFuncionario', 'success', 'Funcionário cadastrado com sucesso!');
+                formFuncionario.reset();
+                carregarFuncionarios();
+            } catch (erro) {
+                mostrarMensagem('msgFuncionario', 'danger', erro.message);
+            }
+        });
+    }
+
+    // ── FORMULÁRIO: CADASTRO DE ASO ──────────────────────────────────────
+    const formAso = document.getElementById('formAso');
+    if (formAso) {
+        formAso.addEventListener('submit', async function (evento) {
+            evento.preventDefault();
+
+            const dados = {
+                id_funcionario: formAso.querySelector('[name="id_funcionario"]').value,
+                tipo_de_exame: formAso.querySelector('[name="Tipo_de_Exame"]').value,
+                data_de_emissao: formAso.querySelector('[name="Data_de_Emissao"]').value,
+                data_de_vencimento: formAso.querySelector('[name="Data_de_vencimento"]').value,
+                resultado: formAso.querySelector('[name="Resultado"]').value,
+                medico_responsavel: formAso.querySelector('[name="Medico_Responsavel"]').value,
+                condicao: formAso.querySelector('[name="Condicao"]').value,
+                observacao: formAso.querySelector('[name="Observacao"]').value
+            };
+
+            try {
+                await chamarApi('/api/aso', 'POST', dados);
+                mostrarMensagem('msgAso', 'success', 'ASO cadastrado com sucesso! Atualizando lista...');
+                formAso.reset();
+                // Recarrega a página para a tabela de relatórios já vir atualizada do servidor
+                setTimeout(function () {
+                    window.location.href = '/dashboard?secao=relatorios';
+                }, 1200);
+            } catch (erro) {
+                mostrarMensagem('msgAso', 'danger', erro.message);
+            }
+        });
+    }
+
+    // ── FILTRO/BUSCA NA TABELA DE ASOs (aplicado sobre a página atual) ──
+    function aplicarFiltrosTabela() {
+        const termoBusca   = (document.getElementById('buscaAso')?.value || '').toLowerCase().trim();
+        const resultado    = document.getElementById('filtroResultado')?.value || '';
+        const condicao     = document.getElementById('filtroCondicao')?.value || '';
+        const tipoExame    = (document.getElementById('filtroTipoExame')?.value || '').toLowerCase();
+        const dataFiltro   = document.getElementById('filtroData')?.value || '';
+
+        const linhas = document.querySelectorAll('#corpoTabelaAso tr');
+
+        linhas.forEach(function (linha) {
+            const nome      = linha.dataset.nome || '';
+            const exame     = linha.dataset.exame || '';
+            const medico    = linha.dataset.medico || '';
+            const linhaResultado = linha.dataset.resultado || '';
+            const linhaCondicao  = linha.dataset.condicao || '';
+            const vencimento     = linha.dataset.vencimento || '';
+
+            const bateBusca = !termoBusca ||
+                nome.includes(termoBusca) ||
+                exame.includes(termoBusca) ||
+                medico.includes(termoBusca);
+
+            const bateResultado = !resultado || linhaResultado === resultado;
+            const bateCondicao  = !condicao || linhaCondicao === condicao;
+            const bateTipo      = !tipoExame || exame === tipoExame;
+            const bateData      = !dataFiltro || vencimento === dataFiltro;
+
+            const visivel = bateBusca && bateResultado && bateCondicao && bateTipo && bateData;
+            linha.style.display = visivel ? '' : 'none';
+        });
+    }
+
+    document.getElementById('btnBuscarAso')?.addEventListener('click', aplicarFiltrosTabela);
+    document.getElementById('buscaAso')?.addEventListener('keyup', aplicarFiltrosTabela);
+    document.getElementById('filtroResultado')?.addEventListener('change', aplicarFiltrosTabela);
+    document.getElementById('filtroCondicao')?.addEventListener('change', aplicarFiltrosTabela);
+    document.getElementById('filtroTipoExame')?.addEventListener('change', aplicarFiltrosTabela);
+    document.getElementById('filtroData')?.addEventListener('change', aplicarFiltrosTabela);
+
+});
+</script>
 
 </body>
 </html>
