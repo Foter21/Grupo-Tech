@@ -505,54 +505,102 @@
 
     <!--------------- Relatórios ------------>
 
-    <section id="relatorios" style="display:none;"> 
-     
-        <div class="card grafico-card border-0 shadow-sm rounded-4 mb-4">
-        <div class="card-body p-4">
+    
+        <!---------------- Pesquisa e Tabela -------------->
 
-        <div class="grafico-cabecalho mb-4">
-            <div class="grafico-icone">
-                <i class="bi bi-bar-chart-line-fill"></i>
+       
+     <!-- FILTRO DE MÊS -->
+
+<section id="relatorios" style="display:none;">
+ <div class="row mb-4">
+    <div class="col-md-4">
+        <label class="form-label fw-semibold">
+            <i class="bi bi-calendar3"></i>
+            Filtrar por ano
+        </label>
+
+        <select id="filtroMesGrafico" class="form-select">
+            <option value="">Todos os anos</option>
+        </select>
+    </div>
+    </div>
+
+
+    <!-- GRÁFICOS -->
+    <div class="row g-4">
+
+    <!-- GRÁFICO DE BARRAS -->
+    <div class="col-lg-8">
+
+        <div class="card grafico-card border-0 shadow-sm rounded-4 h-100">
+
+            <div class="card-body p-4">
+
+                <div class="grafico-cabecalho mb-4">
+
+                    <div class="grafico-icone">
+                        <i class="bi bi-bar-chart-line-fill"></i>
+                    </div>
+
+                    <div>
+                        <h5 class="fw-bold text-aso-blue mb-1">
+                            ASOs emitidos por mês
+                        </h5>
+
+                        <small class="text-muted">
+                            Quantidade mensal separada por tipo de exame
+                        </small>
+                    </div>
+
+                </div>
+
+                <div class="grafico-container">
+                    <canvas id="graficoAsosPorMes"></canvas>
+                </div>
+
             </div>
 
-            <div>
-                <h5 class="fw-bold text-aso-blue mb-1">
-                    ASOs emitidos por mês
-                </h5>
-
-                <small class="text-muted">
-                    Quantidade mensal separada por tipo de exame
-                </small>
-            </div>
-        </div>
-
-        <div class="grafico-container">
-            <canvas id="graficoAsosPorMes"></canvas>
         </div>
 
     </div>
-    
-
-    <!---------------- GRAFICO MIGUEL -------------->
 
 
-        <!---------------- Pesquisa e Tabela -------------->
+    <!-- GRÁFICO DE PIZZA -->
+    <div class="col-lg-4">
 
-        <div class="card table-card aso-table-card mt-4 border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card grafico-card border-0 shadow-sm rounded-4 h-100">
 
-    <div class="card-header bg-white py-4 border-0">
+            <div class="card-body p-4">
 
-        <div class="row align-items-center g-3">
+                <div class="grafico-cabecalho mb-4">
 
-            <div class="col-md-6">
-                <h4 class="mb-1 fw-bold text-aso-blue">
-                    <i class="bi bi-clipboard2-pulse-fill"></i>
-                    Gestão de ASOs
-                </h4>
-                <small class="text-muted">
-                    Consulte, acompanhe e gerencie os exames ocupacionais cadastrados.
-                </small>
+                    <div class="grafico-icone">
+                        <i class="bi bi-pie-chart-fill"></i>
+                    </div>
+
+                    <div>
+                        <h5 class="fw-bold text-aso-blue mb-1">
+                            Distribuição dos ASOs
+                        </h5>
+
+                        <small class="text-muted">
+                            Total por tipo de exame
+                        </small>
+                    </div>
+
+                </div>
+
+                <div class="grafico-pizza-container">
+                    <canvas id="graficoPizzaAso"></canvas>
+                </div>
+
             </div>
+
+        </div>
+
+    </div>
+
+    </div>
 
             <div class="col-md-6">
                 <div class="input-group search-aso">
@@ -737,7 +785,7 @@
 
         <!---------------- Pesquisa e Tabela -------------->
 
-    </section>
+</section>
     <!------------- Relatórios ------------>
 
  
@@ -806,7 +854,7 @@
         <hr class="premium-hr">
 
         <div class="d-flex flex-wrap justify-content-between text-muted">
-            <small>© 2026 ASOConnect</small>
+            <small>©️ 2026 ASOConnect</small>
             <small>Desenvolvido por Equipe ASOConnect</small>
         </div>
     </div>
@@ -898,10 +946,13 @@ document.addEventListener('click', function(event){
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const canvas = document.getElementById('graficoAsosPorMes');
-    const elementoDados = document.getElementById('dados-grafico-json');
 
-    if (!canvas || !elementoDados) {
+    const canvasBarras = document.getElementById('graficoAsosPorMes');
+    const canvasPizza = document.getElementById('graficoPizzaAso');
+    const elementoDados = document.getElementById('dados-grafico-json');
+    const filtroMes = document.getElementById('filtroMesGrafico');
+
+    if (!canvasBarras || !canvasPizza || !elementoDados) {
         return;
     }
 
@@ -918,274 +969,606 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    const meses = dadosGrafico.map(item => item.mes);
 
-    const admissionais = dadosGrafico.map(
-        item => Number(item.admissional) || 0
-    );
+    /* ============================================================
+       PREENCHER FILTRO DE MESES
+    ============================================================ */
 
-    const periodicos = dadosGrafico.map(
-        item => Number(item.periodico) || 0
-    );
+    dadosGrafico.forEach(function (item) {
 
-    const demissionais = dadosGrafico.map(
-        item => Number(item.demissional) || 0
-    );
+        const opcao = document.createElement('option');
 
-    const retornos = dadosGrafico.map(
-        item => Number(item.retorno) || 0
-    );
+        opcao.value = item.mes;
+        opcao.textContent = item.mes;
 
-    const estiloBarra = {
-        borderRadius: {
-            topLeft: 12,
-            topRight: 12,
-            bottomLeft: 12,
-            bottomRight: 12
-        },
-        borderSkipped: false,
-        inflateAmount: 1,
-        borderWidth: 0,
-        barPercentage: 0.72,
-        categoryPercentage: 0.72
-    };
+        filtroMes.appendChild(opcao);
 
-    const pluginTotais = {
-        id: 'pluginTotais',
+    });
 
-        afterDatasetsDraw(chart) {
-            const {
-                ctx,
-                scales: { x, y }
-            } = chart;
 
-            ctx.save();
-            ctx.font = 'bold 13px Arial';
-            ctx.fillStyle = '#334155';
-            ctx.textAlign = 'center';
+    /* ============================================================
+       VARIÁVEIS DOS GRÁFICOS
+    ============================================================ */
 
-            chart.data.labels.forEach(function (_, indice) {
-                const total = chart.data.datasets.reduce(function (soma, dataset) {
-                    return soma + Number(dataset.data[indice] || 0);
-                }, 0);
+    let graficoBarras;
+    let graficoPizza;
 
-                if (total === 0) {
-                    return;
-                }
 
-                const posicaoX = x.getPixelForValue(indice);
-                const posicaoY = y.getPixelForValue(total);
+    /* ============================================================
+       FUNÇÃO PARA ATUALIZAR OS GRÁFICOS
+    ============================================================ */
 
-                ctx.fillText(
-                    total,
-                    posicaoX,
-                    posicaoY - 10
-                );
+    function atualizarGraficos(mesSelecionado = '') {
+
+        let dadosFiltrados = dadosGrafico;
+
+        if (mesSelecionado !== '') {
+
+            dadosFiltrados = dadosGrafico.filter(function (item) {
+                return item.mes === mesSelecionado;
             });
 
-            ctx.restore();
         }
-    };
 
-    new Chart(canvas, {
-        type: 'bar',
 
-        data: {
-            labels: meses,
+        /* ========================================================
+           DADOS DO GRÁFICO DE BARRAS
+        ======================================================== */
 
-            datasets: [
-                {
-                    label: 'Admissional',
-                    data: admissionais,
-                    backgroundColor: '#0067b1',
-                    hoverBackgroundColor: '#004f87',
-                    ...estiloBarra
-                },
-                {
-                    label: 'Periódico',
-                    data: periodicos,
-                    backgroundColor: '#4caf3d',
-                    hoverBackgroundColor: '#2f8b2f',
-                    ...estiloBarra
-                },
-                {
-                    label: 'Demissional',
-                    data: demissionais,
-                    backgroundColor: '#dc3545',
-                    hoverBackgroundColor: '#b02a37',
-                    ...estiloBarra
-                },
-                {
-                    label: 'Retorno ao trabalho',
-                    data: retornos,
-                    backgroundColor: '#8b5cf6',
-                    hoverBackgroundColor: '#6d28d9',
-                    ...estiloBarra
-                }
-            ]
-        },
+        const meses = dadosFiltrados.map(item => item.mes);
 
-        plugins: [pluginTotais],
+        const admissionais = dadosFiltrados.map(
+            item => Number(item.admissional) || 0
+        );
 
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
+        const periodicos = dadosFiltrados.map(
+            item => Number(item.periodico) || 0
+        );
 
-            animation: {
-                duration: 1200,
-                easing: 'easeOutQuart'
+        const demissionais = dadosFiltrados.map(
+            item => Number(item.demissional) || 0
+        );
+
+        const retornos = dadosFiltrados.map(
+            item => Number(item.retorno) || 0
+        );
+
+
+        /* ========================================================
+           DADOS DO GRÁFICO DE PIZZA
+        ======================================================== */
+
+        const totalAdmissional = admissionais.reduce(
+            (soma, valor) => soma + valor,
+            0
+        );
+
+        const totalPeriodico = periodicos.reduce(
+            (soma, valor) => soma + valor,
+            0
+        );
+
+        const totalDemissional = demissionais.reduce(
+            (soma, valor) => soma + valor,
+            0
+        );
+
+        const totalRetorno = retornos.reduce(
+            (soma, valor) => soma + valor,
+            0
+        );
+
+
+        /* ========================================================
+           DESTRUIR GRÁFICOS ANTERIORES
+        ======================================================== */
+
+        if (graficoBarras) {
+            graficoBarras.destroy();
+        }
+
+        if (graficoPizza) {
+            graficoPizza.destroy();
+        }
+
+
+        /* ========================================================
+           ESTILO DAS BARRAS
+        ======================================================== */
+
+        const estiloBarra = {
+
+            borderRadius: {
+                topLeft: 12,
+                topRight: 12,
+                bottomLeft: 12,
+                bottomRight: 12
             },
 
-            layout: {
-                padding: {
-                    top: 28,
-                    right: 15,
-                    bottom: 5,
-                    left: 5
-                }
-            },
+            borderSkipped: false,
+            inflateAmount: 1,
+            borderWidth: 0,
+            barPercentage: 0.72,
+            categoryPercentage: 0.72
 
-            interaction: {
-                mode: 'index',
-                intersect: false
-            },
+        };
 
-            plugins: {
-                legend: {
-                    position: 'bottom',
 
-                    labels: {
-                        usePointStyle: true,
-                        pointStyle: 'circle',
-                        padding: 22,
-                        boxWidth: 10,
-                        boxHeight: 10,
-                        color: '#475569',
+        /* ========================================================
+           PLUGIN PARA MOSTRAR TOTAL ACIMA DA BARRA
+        ======================================================== */
 
-                        font: {
-                            size: 13,
-                            weight: '500'
-                        }
-                    }
-                },
+        const pluginTotais = {
 
-                tooltip: {
-                    backgroundColor: '#0f172a',
-                    titleColor: '#ffffff',
-                    bodyColor: '#e2e8f0',
-                    footerColor: '#ffffff',
-                    borderColor: '#334155',
-                    borderWidth: 1,
-                    padding: 14,
-                    cornerRadius: 10,
-                    displayColors: true,
+            id: 'pluginTotais',
 
-                    titleFont: {
-                        size: 14,
-                        weight: 'bold'
-                    },
+            afterDatasetsDraw(chart) {
 
-                    bodyFont: {
-                        size: 13
-                    },
+                const {
+                    ctx,
+                    scales: { x, y }
+                } = chart;
 
-                    callbacks: {
-                        label: function (contexto) {
-                            return (
-                                contexto.dataset.label +
-                                ': ' +
-                                contexto.parsed.y +
-                                ' ASO(s)'
-                            );
+                ctx.save();
+
+                ctx.font = 'bold 13px Arial';
+                ctx.fillStyle = '#334155';
+                ctx.textAlign = 'center';
+
+                chart.data.labels.forEach(function (_, indice) {
+
+                    const total = chart.data.datasets.reduce(
+                        function (soma, dataset) {
+
+                            return soma +
+                                Number(dataset.data[indice] || 0);
+
                         },
+                        0
+                    );
 
-                        footer: function (itens) {
-                            const total = itens.reduce(function (soma, item) {
-                                return soma + Number(item.parsed.y || 0);
-                            }, 0);
-
-                            return 'Total do mês: ' + total;
-                        }
+                    if (total === 0) {
+                        return;
                     }
-                }
-            },
 
-            scales: {
-                x: {
-                    stacked: true,
+                    const posicaoX =
+                        x.getPixelForValue(indice);
 
-                    grid: {
-                        display: false
-                    },
+                    const posicaoY =
+                        y.getPixelForValue(total);
 
-                    border: {
-                        display: false
-                    },
+                    ctx.fillText(
+                        total,
+                        posicaoX,
+                        posicaoY - 10
+                    );
 
-                    ticks: {
-                        color: '#64748b',
+                });
 
-                        font: {
-                            size: 12,
-                            weight: '500'
-                        }
-                    },
+                ctx.restore();
 
-                    title: {
-                        display: true,
-                        text: 'Mês de emissão',
-                        color: '#475569',
-
-                        font: {
-                            size: 13,
-                            weight: '600'
-                        },
-
-                        padding: {
-                            top: 12
-                        }
-                    }
-                },
-
-                y: {
-                    stacked: true,
-                    beginAtZero: true,
-                    grace: '15%',
-
-                    grid: {
-                        color: 'rgba(148, 163, 184, 0.18)',
-                        drawTicks: false
-                    },
-
-                    border: {
-                        display: false
-                    },
-
-                    ticks: {
-                        stepSize: 1,
-                        precision: 0,
-                        color: '#64748b',
-                        padding: 10,
-
-                        font: {
-                            size: 12
-                        }
-                    },
-
-                    title: {
-                        display: true,
-                        text: 'Quantidade de ASOs',
-                        color: '#475569',
-
-                        font: {
-                            size: 13,
-                            weight: '600'
-                        }
-                    }
-                }
             }
-        }
+
+        };
+
+
+        /* ========================================================
+           GRÁFICO DE BARRAS
+        ======================================================== */
+
+        graficoBarras = new Chart(canvasBarras, {
+
+            type: 'bar',
+
+            data: {
+
+                labels: meses,
+
+                datasets: [
+
+                    {
+                        label: 'Admissional',
+                        data: admissionais,
+                        backgroundColor: '#0067b1',
+                        hoverBackgroundColor: '#004f87',
+                        ...estiloBarra
+                    },
+
+                    {
+                        label: 'Periódico',
+                        data: periodicos,
+                        backgroundColor: '#4caf3d',
+                        hoverBackgroundColor: '#2f8b2f',
+                        ...estiloBarra
+                    },
+
+                    {
+                        label: 'Demissional',
+                        data: demissionais,
+                        backgroundColor: '#dc3545',
+                        hoverBackgroundColor: '#b02a37',
+                        ...estiloBarra
+                    },
+
+                    {
+                        label: 'Retorno ao trabalho',
+                        data: retornos,
+                        backgroundColor: '#8b5cf6',
+                        hoverBackgroundColor: '#6d28d9',
+                        ...estiloBarra
+                    }
+
+                ]
+
+            },
+
+            plugins: [pluginTotais],
+
+            options: {
+
+                responsive: true,
+                maintainAspectRatio: false,
+
+                animation: {
+                    duration: 1200,
+                    easing: 'easeOutQuart'
+                },
+
+                layout: {
+
+                    padding: {
+                        top: 28,
+                        right: 15,
+                        bottom: 5,
+                        left: 5
+                    }
+
+                },
+
+                interaction: {
+
+                    mode: 'index',
+                    intersect: false
+
+                },
+
+                plugins: {
+
+                    legend: {
+
+                        position: 'bottom',
+
+                        labels: {
+
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 22,
+                            boxWidth: 10,
+                            boxHeight: 10,
+                            color: '#475569',
+
+                            font: {
+
+                                size: 13,
+                                weight: '500'
+
+                            }
+
+                        }
+
+                    },
+
+                    tooltip: {
+
+                        backgroundColor: '#0f172a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e2e8f0',
+                        footerColor: '#ffffff',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        padding: 14,
+                        cornerRadius: 10,
+                        displayColors: true,
+
+                        callbacks: {
+
+                            label: function (contexto) {
+
+                                return (
+                                    contexto.dataset.label +
+                                    ': ' +
+                                    contexto.parsed.y +
+                                    ' ASO(s)'
+                                );
+
+                            },
+
+                            footer: function (itens) {
+
+                                const total = itens.reduce(
+                                    function (soma, item) {
+
+                                        return soma +
+                                            Number(item.parsed.y || 0);
+
+                                    },
+                                    0
+                                );
+
+                                return 'Total do mês: ' + total;
+
+                            }
+
+                        }
+
+                    }
+
+                },
+
+                scales: {
+
+                    x: {
+
+                        stacked: true,
+
+                        grid: {
+                            display: false
+                        },
+
+                        border: {
+                            display: false
+                        },
+
+                        ticks: {
+
+                            color: '#64748b',
+
+                            font: {
+
+                                size: 12,
+                                weight: '500'
+
+                            }
+
+                        },
+
+                        title: {
+
+                            display: true,
+                            text: 'Mês de emissão',
+                            color: '#475569',
+
+                            font: {
+
+                                size: 13,
+                                weight: '600'
+
+                            },
+
+                            padding: {
+
+                                top: 12
+
+                            }
+
+                        }
+
+                    },
+
+                    y: {
+
+                        stacked: true,
+                        beginAtZero: true,
+                        grace: '15%',
+
+                        grid: {
+
+                            color:
+                                'rgba(148, 163, 184, 0.18)',
+
+                            drawTicks: false
+
+                        },
+
+                        border: {
+
+                            display: false
+
+                        },
+
+                        ticks: {
+
+                            stepSize: 1,
+                            precision: 0,
+                            color: '#64748b',
+                            padding: 10,
+
+                            font: {
+
+                                size: 12
+
+                            }
+
+                        },
+
+                        title: {
+
+                            display: true,
+                            text: 'Quantidade de ASOs',
+                            color: '#475569',
+
+                            font: {
+
+                                size: 13,
+                                weight: '600'
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        });
+
+
+        /* ========================================================
+           GRÁFICO DE PIZZA
+        ======================================================== */
+
+        graficoPizza = new Chart(canvasPizza, {
+
+            type: 'doughnut',
+
+            data: {
+
+                labels: [
+
+                    'Admissional',
+                    'Periódico',
+                    'Demissional',
+                    'Retorno ao trabalho'
+
+                ],
+
+                datasets: [
+
+                    {
+
+                        data: [
+
+                            totalAdmissional,
+                            totalPeriodico,
+                            totalDemissional,
+                            totalRetorno
+
+                        ],
+
+                        backgroundColor: [
+
+                            '#0067b1',
+                            '#4caf3d',
+                            '#dc3545',
+                            '#8b5cf6'
+
+                        ],
+
+                        borderWidth: 3,
+                        borderColor: '#ffffff',
+                        hoverOffset: 8
+
+                    }
+
+                ]
+
+            },
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                cutout: '58%',
+
+                animation: {
+
+                    duration: 1200
+
+                },
+
+                plugins: {
+
+                    legend: {
+
+                        position: 'bottom',
+
+                        labels: {
+
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 16,
+                            boxWidth: 10,
+                            boxHeight: 10,
+                            color: '#475569',
+
+                            font: {
+
+                                size: 12,
+                                weight: '500'
+
+                            }
+
+                        }
+
+                    },
+
+                    tooltip: {
+
+                        backgroundColor: '#0f172a',
+
+                        callbacks: {
+
+                            label: function (contexto) {
+
+                                const valor =
+                                    contexto.raw;
+
+                                const total =
+                                    contexto.dataset.data.reduce(
+                                        (a, b) => a + b,
+                                        0
+                                    );
+
+                                const porcentagem =
+                                    total > 0
+                                        ? ((valor / total) * 100).toFixed(1)
+                                        : 0;
+
+                                return (
+                                    contexto.label +
+                                    ': ' +
+                                    valor +
+                                    ' ASO(s) (' +
+                                    porcentagem +
+                                    '%)'
+                                );
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        });
+
+    }
+
+
+    /* ============================================================
+       FILTRO POR MÊS
+    ============================================================ */
+
+    filtroMes.addEventListener('change', function () {
+
+        atualizarGraficos(this.value);
+
     });
+
+
+    /* ============================================================
+       INICIAR GRÁFICOS
+    ============================================================ */
+
+    atualizarGraficos();
+
 });
 </script>
 
@@ -1193,10 +1576,10 @@ document.addEventListener('DOMContentLoaded', function () {
 <!-- ============================================================
      INTEGRAÇÃO FRONTEND <-> BACKEND (API Flask)
      ============================================================ -->
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ── FUNÇÃO AUXILIAR: mostrar mensagem de sucesso/erro ──────────────
     function mostrarMensagem(containerId, tipo, texto) {
         const container = document.getElementById(containerId);
         if (!container) return;
@@ -1209,7 +1592,6 @@ document.addEventListener('DOMContentLoaded', function () {
         `;
     }
 
-    // ── FUNÇÃO AUXILIAR: chamada genérica à API ─────────────────────────
     async function chamarApi(url, metodo, dados) {
         const resposta = await fetch(url, {
             method: metodo,
@@ -1226,7 +1608,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return corpo;
     }
 
-    // ── CARREGAR EMPRESAS NOS SELECTS (Funcionário e ASO) ───────────────
     async function carregarEmpresas() {
         try {
             const empresas = await chamarApi('/api/empresa', 'GET');
@@ -1239,174 +1620,486 @@ document.addEventListener('DOMContentLoaded', function () {
             selects.forEach(function (select) {
                 if (!select) return;
 
-                // Mantém a primeira opção ("Selecione...") e remove o resto
                 const primeiraOpcao = select.querySelector('option');
                 select.innerHTML = '';
+
                 if (primeiraOpcao) select.appendChild(primeiraOpcao);
 
                 empresas.forEach(function (empresa) {
                     const opcao = document.createElement('option');
+
                     opcao.value = empresa.ID_Empresa ?? empresa.id_empresa;
-                    opcao.textContent = empresa.Nome_Empresa ?? empresa.nome_empresa;
+
+                    opcao.textContent =
+                        empresa.Nome_Empresa ??
+                        empresa.nome_empresa;
+
                     select.appendChild(opcao);
                 });
             });
+
         } catch (erro) {
             console.error('Erro ao carregar empresas:', erro);
         }
     }
 
-    // ── CARREGAR FUNCIONÁRIOS NO SELECT DO FORMULÁRIO DE ASO ────────────
     async function carregarFuncionarios() {
+
         try {
-            const funcionarios = await chamarApi('/api/funcionarios', 'GET');
-            const select = document.getElementById('selectFuncionarioAso');
+
+            const funcionarios =
+                await chamarApi('/api/funcionarios', 'GET');
+
+            const select =
+                document.getElementById('selectFuncionarioAso');
+
             if (!select) return;
 
-            const primeiraOpcao = select.querySelector('option');
+            const primeiraOpcao =
+                select.querySelector('option');
+
             select.innerHTML = '';
-            if (primeiraOpcao) select.appendChild(primeiraOpcao);
+
+            if (primeiraOpcao) {
+                select.appendChild(primeiraOpcao);
+            }
 
             funcionarios.forEach(function (func) {
-                const opcao = document.createElement('option');
-                opcao.value = func.ID_Funcionarios ?? func.id_funcionarios;
-                opcao.textContent = func.Nome ?? func.nome;
+
+                const opcao =
+                    document.createElement('option');
+
+                opcao.value =
+                    func.ID_Funcionarios ??
+                    func.id_funcionarios;
+
+                opcao.textContent =
+                    func.Nome ??
+                    func.nome;
+
                 select.appendChild(opcao);
+
             });
+
         } catch (erro) {
-            console.error('Erro ao carregar funcionários:', erro);
+
+            console.error(
+                'Erro ao carregar funcionários:',
+                erro
+            );
+
         }
+
     }
 
     carregarEmpresas();
     carregarFuncionarios();
 
-    // ── FORMULÁRIO: CADASTRO DE EMPRESA ─────────────────────────────────
-    const formEmpresa = document.getElementById('formEmpresa');
+    const formEmpresa =
+        document.getElementById('formEmpresa');
+
     if (formEmpresa) {
-        formEmpresa.addEventListener('submit', async function (evento) {
-            evento.preventDefault();
 
-            const dados = {
-                nome_empresa: formEmpresa.querySelector('[name="Nome_Empresa"]').value,
-                cnpj: formEmpresa.querySelector('[name="CNPJ"]').value,
-                email: formEmpresa.querySelector('[name="Email"]').value,
-                telefone: formEmpresa.querySelector('[name="Telefone"]').value,
-                endereco: formEmpresa.querySelector('[name="Endereco"]').value
-            };
+        formEmpresa.addEventListener(
+            'submit',
+            async function (evento) {
 
-            try {
-                await chamarApi('/api/empresa', 'POST', dados);
-                mostrarMensagem('msgEmpresa', 'success', 'Empresa cadastrada com sucesso!');
-                formEmpresa.reset();
-                carregarEmpresas();
-            } catch (erro) {
-                mostrarMensagem('msgEmpresa', 'danger', erro.message);
+                evento.preventDefault();
+
+                const dados = {
+
+                    nome_empresa:
+                        formEmpresa.querySelector(
+                            '[name="Nome_Empresa"]'
+                        ).value,
+
+                    cnpj:
+                        formEmpresa.querySelector(
+                            '[name="CNPJ"]'
+                        ).value,
+
+                    email:
+                        formEmpresa.querySelector(
+                            '[name="Email"]'
+                        ).value,
+
+                    telefone:
+                        formEmpresa.querySelector(
+                            '[name="Telefone"]'
+                        ).value,
+
+                    endereco:
+                        formEmpresa.querySelector(
+                            '[name="Endereco"]'
+                        ).value
+
+                };
+
+                try {
+
+                    await chamarApi(
+                        '/api/empresa',
+                        'POST',
+                        dados
+                    );
+
+                    mostrarMensagem(
+                        'msgEmpresa',
+                        'success',
+                        'Empresa cadastrada com sucesso!'
+                    );
+
+                    formEmpresa.reset();
+
+                    carregarEmpresas();
+
+                } catch (erro) {
+
+                    mostrarMensagem(
+                        'msgEmpresa',
+                        'danger',
+                        erro.message
+                    );
+
+                }
+
             }
-        });
+        );
+
     }
 
-    // ── FORMULÁRIO: CADASTRO DE FUNCIONÁRIO ─────────────────────────────
-    const formFuncionario = document.getElementById('formFuncionario');
+    const formFuncionario =
+        document.getElementById('formFuncionario');
+
     if (formFuncionario) {
-        formFuncionario.addEventListener('submit', async function (evento) {
-            evento.preventDefault();
 
-            const dados = {
-                nome: formFuncionario.querySelector('[name="Nome"]').value,
-                cpf: formFuncionario.querySelector('[name="CPF"]').value,
-                data_de_nascimento: formFuncionario.querySelector('[name="Data_de_nascimento"]').value,
-                cargo: formFuncionario.querySelector('[name="Cargo"]').value,
-                setor: formFuncionario.querySelector('[name="Setor"]').value,
-                email: formFuncionario.querySelector('[name="Email"]').value,
-                id_empresa: formFuncionario.querySelector('[name="ID_empresa"]').value,
-                data_de_admissao: formFuncionario.querySelector('[name="Data_de_Admissao"]').value,
-                celular: formFuncionario.querySelector('[name="Celular"]').value,
-                whatsapp: formFuncionario.querySelector('[name="WhatsApp"]').value,
-                condicao: formFuncionario.querySelector('[name="Condicao"]').value
-            };
+        formFuncionario.addEventListener(
+            'submit',
+            async function (evento) {
 
-            try {
-                await chamarApi('/api/funcionarios', 'POST', dados);
-                mostrarMensagem('msgFuncionario', 'success', 'Funcionário cadastrado com sucesso!');
-                formFuncionario.reset();
-                carregarFuncionarios();
-            } catch (erro) {
-                mostrarMensagem('msgFuncionario', 'danger', erro.message);
+                evento.preventDefault();
+
+                const dados = {
+
+                    nome:
+                        formFuncionario.querySelector(
+                            '[name="Nome"]'
+                        ).value,
+
+                    cpf:
+                        formFuncionario.querySelector(
+                            '[name="CPF"]'
+                        ).value,
+
+                    data_de_nascimento:
+                        formFuncionario.querySelector(
+                            '[name="Data_de_nascimento"]'
+                        ).value,
+
+                    cargo:
+                        formFuncionario.querySelector(
+                            '[name="Cargo"]'
+                        ).value,
+
+                    setor:
+                        formFuncionario.querySelector(
+                            '[name="Setor"]'
+                        ).value,
+
+                    email:
+                        formFuncionario.querySelector(
+                            '[name="Email"]'
+                        ).value,
+
+                    id_empresa:
+                        formFuncionario.querySelector(
+                            '[name="ID_empresa"]'
+                        ).value,
+
+                    data_de_admissao:
+                        formFuncionario.querySelector(
+                            '[name="Data_de_Admissao"]'
+                        ).value,
+
+                    celular:
+                        formFuncionario.querySelector(
+                            '[name="Celular"]'
+                        ).value,
+
+                    whatsapp:
+                        formFuncionario.querySelector(
+                            '[name="WhatsApp"]'
+                        ).value,
+
+                    condicao:
+                        formFuncionario.querySelector(
+                            '[name="Condicao"]'
+                        ).value
+
+                };
+
+                try {
+
+                    await chamarApi(
+                        '/api/funcionarios',
+                        'POST',
+                        dados
+                    );
+
+                    mostrarMensagem(
+                        'msgFuncionario',
+                        'success',
+                        'Funcionário cadastrado com sucesso!'
+                    );
+
+                    formFuncionario.reset();
+
+                    carregarFuncionarios();
+
+                } catch (erro) {
+
+                    mostrarMensagem(
+                        'msgFuncionario',
+                        'danger',
+                        erro.message
+                    );
+
+                }
+
             }
-        });
+        );
+
     }
 
-    // ── FORMULÁRIO: CADASTRO DE ASO ──────────────────────────────────────
-    const formAso = document.getElementById('formAso');
+    const formAso =
+        document.getElementById('formAso');
+
     if (formAso) {
-        formAso.addEventListener('submit', async function (evento) {
-            evento.preventDefault();
 
-            const dados = {
-                id_funcionario: formAso.querySelector('[name="id_funcionario"]').value,
-                tipo_de_exame: formAso.querySelector('[name="Tipo_de_Exame"]').value,
-                data_de_emissao: formAso.querySelector('[name="Data_de_Emissao"]').value,
-                data_de_vencimento: formAso.querySelector('[name="Data_de_vencimento"]').value,
-                resultado: formAso.querySelector('[name="Resultado"]').value,
-                medico_responsavel: formAso.querySelector('[name="Medico_Responsavel"]').value,
-                condicao: formAso.querySelector('[name="Condicao"]').value,
-                observacao: formAso.querySelector('[name="Observacao"]').value
-            };
+        formAso.addEventListener(
+            'submit',
+            async function (evento) {
 
-            try {
-                await chamarApi('/api/aso', 'POST', dados);
-                mostrarMensagem('msgAso', 'success', 'ASO cadastrado com sucesso! Atualizando lista...');
-                formAso.reset();
-                // Recarrega a página para a tabela de relatórios já vir atualizada do servidor
-                setTimeout(function () {
-                    window.location.href = '/dashboard?secao=relatorios';
-                }, 1200);
-            } catch (erro) {
-                mostrarMensagem('msgAso', 'danger', erro.message);
+                evento.preventDefault();
+
+                const dados = {
+
+                    id_funcionario:
+                        formAso.querySelector(
+                            '[name="id_funcionario"]'
+                        ).value,
+
+                    tipo_de_exame:
+                        formAso.querySelector(
+                            '[name="Tipo_de_Exame"]'
+                        ).value,
+
+                    data_de_emissao:
+                        formAso.querySelector(
+                            '[name="Data_de_Emissao"]'
+                        ).value,
+
+                    data_de_vencimento:
+                        formAso.querySelector(
+                            '[name="Data_de_vencimento"]'
+                        ).value,
+
+                    resultado:
+                        formAso.querySelector(
+                            '[name="Resultado"]'
+                        ).value,
+
+                    medico_responsavel:
+                        formAso.querySelector(
+                            '[name="Medico_Responsavel"]'
+                        ).value,
+
+                    condicao:
+                        formAso.querySelector(
+                            '[name="Condicao"]'
+                        ).value,
+
+                    observacao:
+                        formAso.querySelector(
+                            '[name="Observacao"]'
+                        ).value
+
+                };
+
+                try {
+
+                    await chamarApi(
+                        '/api/aso',
+                        'POST',
+                        dados
+                    );
+
+                    mostrarMensagem(
+                        'msgAso',
+                        'success',
+                        'ASO cadastrado com sucesso! Atualizando lista...'
+                    );
+
+                    formAso.reset();
+
+                    setTimeout(
+                        function () {
+
+                            window.location.href =
+                                '/dashboard?secao=relatorios';
+
+                        },
+                        1200
+                    );
+
+                } catch (erro) {
+
+                    mostrarMensagem(
+                        'msgAso',
+                        'danger',
+                        erro.message
+                    );
+
+                }
+
             }
-        });
+        );
+
     }
 
-    // ── FILTRO/BUSCA NA TABELA DE ASOs (aplicado sobre a página atual) ──
     function aplicarFiltrosTabela() {
-        const termoBusca   = (document.getElementById('buscaAso')?.value || '').toLowerCase().trim();
-        const resultado    = document.getElementById('filtroResultado')?.value || '';
-        const condicao     = document.getElementById('filtroCondicao')?.value || '';
-        const tipoExame    = (document.getElementById('filtroTipoExame')?.value || '').toLowerCase();
-        const dataFiltro   = document.getElementById('filtroData')?.value || '';
 
-        const linhas = document.querySelectorAll('#corpoTabelaAso tr');
+        const termoBusca =
+            (
+                document.getElementById(
+                    'buscaAso'
+                )?.value || ''
+            ).toLowerCase().trim();
+
+        const resultado =
+            document.getElementById(
+                'filtroResultado'
+            )?.value || '';
+
+        const condicao =
+            document.getElementById(
+                'filtroCondicao'
+            )?.value || '';
+
+        const tipoExame =
+            (
+                document.getElementById(
+                    'filtroTipoExame'
+                )?.value || ''
+            ).toLowerCase();
+
+        const dataFiltro =
+            document.getElementById(
+                'filtroData'
+            )?.value || '';
+
+        const linhas =
+            document.querySelectorAll(
+                '#corpoTabelaAso tr'
+            );
 
         linhas.forEach(function (linha) {
-            const nome      = linha.dataset.nome || '';
-            const exame     = linha.dataset.exame || '';
-            const medico    = linha.dataset.medico || '';
-            const linhaResultado = linha.dataset.resultado || '';
-            const linhaCondicao  = linha.dataset.condicao || '';
-            const vencimento     = linha.dataset.vencimento || '';
 
-            const bateBusca = !termoBusca ||
+            const nome =
+                linha.dataset.nome || '';
+
+            const exame =
+                linha.dataset.exame || '';
+
+            const medico =
+                linha.dataset.medico || '';
+
+            const linhaResultado =
+                linha.dataset.resultado || '';
+
+            const linhaCondicao =
+                linha.dataset.condicao || '';
+
+            const vencimento =
+                linha.dataset.vencimento || '';
+
+            const bateBusca =
+                !termoBusca ||
                 nome.includes(termoBusca) ||
                 exame.includes(termoBusca) ||
                 medico.includes(termoBusca);
 
-            const bateResultado = !resultado || linhaResultado === resultado;
-            const bateCondicao  = !condicao || linhaCondicao === condicao;
-            const bateTipo      = !tipoExame || exame === tipoExame;
-            const bateData      = !dataFiltro || vencimento === dataFiltro;
+            const bateResultado =
+                !resultado ||
+                linhaResultado === resultado;
 
-            const visivel = bateBusca && bateResultado && bateCondicao && bateTipo && bateData;
-            linha.style.display = visivel ? '' : 'none';
+            const bateCondicao =
+                !condicao ||
+                linhaCondicao === condicao;
+
+            const bateTipo =
+                !tipoExame ||
+                exame === tipoExame;
+
+            const bateData =
+                !dataFiltro ||
+                vencimento === dataFiltro;
+
+            const visivel =
+                bateBusca &&
+                bateResultado &&
+                bateCondicao &&
+                bateTipo &&
+                bateData;
+
+            linha.style.display =
+                visivel ? '' : 'none';
+
         });
+
     }
 
-    document.getElementById('btnBuscarAso')?.addEventListener('click', aplicarFiltrosTabela);
-    document.getElementById('buscaAso')?.addEventListener('keyup', aplicarFiltrosTabela);
-    document.getElementById('filtroResultado')?.addEventListener('change', aplicarFiltrosTabela);
-    document.getElementById('filtroCondicao')?.addEventListener('change', aplicarFiltrosTabela);
-    document.getElementById('filtroTipoExame')?.addEventListener('change', aplicarFiltrosTabela);
-    document.getElementById('filtroData')?.addEventListener('change', aplicarFiltrosTabela);
+    document
+        .getElementById('btnBuscarAso')
+        ?.addEventListener(
+            'click',
+            aplicarFiltrosTabela
+        );
+
+    document
+        .getElementById('buscaAso')
+        ?.addEventListener(
+            'keyup',
+            aplicarFiltrosTabela
+        );
+
+    document
+        .getElementById('filtroResultado')
+        ?.addEventListener(
+            'change',
+            aplicarFiltrosTabela
+        );
+
+    document
+        .getElementById('filtroCondicao')
+        ?.addEventListener(
+            'change',
+            aplicarFiltrosTabela
+        );
+
+    document
+        .getElementById('filtroTipoExame')
+        ?.addEventListener(
+            'change',
+            aplicarFiltrosTabela
+        );
+
+    document
+        .getElementById('filtroData')
+        ?.addEventListener(
+            'change',
+            aplicarFiltrosTabela
+        );
 
 });
 </script>
