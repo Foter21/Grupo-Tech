@@ -1035,3 +1035,13 @@
 /*=====================================
            GRAFICOS CSS
 ======================================== */
+
+.grafico-container {
+    position: relative;
+    height: 390px;
+}
+
+.grafico-pizza-container {
+    position: relative;
+    height: 390px;
+}
