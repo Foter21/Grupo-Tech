@@ -1,0 +1,2108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASOConnect - Sistema de Controle de Saúde Ocupacional</title>
+
+    <link rel="icon" type="image/x-icon"
+          href="{{ url_for('static', filename='favicon.png') }}">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+
+<body>
+
+    <!------ Cabeçalho ------>
+
+<header class="aso-header">
+
+    <div class="aso-header-left">
+        <img src="{{ url_for('static', filename='asoimagem.jpeg') }}"
+             alt="ASOConnect"
+             class="aso-logo">
+
+        <div>
+            <h1>ASO<span>Connect</span></h1>
+            <p>Sistema de Controle de Saúde Ocupacional</p>
+        </div>
+    </div>
+
+    <div class="aso-header-right">
+
+        <div class="aso-clock">
+            <i class="bi bi-calendar3"></i>
+            <span id="dataAtual"></span>
+
+            <i class="bi bi-clock ms-3"></i>
+            <span id="horaAtual"></span>
+        </div>
+
+        <div class="aso-admin">
+            <button type="button" class="aso-admin-btn" onclick="abrirMenuAdmin()">
+                <i class="bi bi-person-circle"></i>
+
+                <div>
+                   <strong>{{ session.get("nome", "Administrador") }}</strong>
+                    <small>Sistema Online</small>
+                </div>
+
+                <i class="bi bi-chevron-down seta"></i>
+            </button>
+
+            <div class="aso-admin-menu" id="adminMenu">
+
+                <a href="/logout" class="logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Sair do Sistema
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+</header>
+
+ <!------- Cabeçalho ------>
+
+    <!------ MENU -------->
+
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-aso shadow-sm sticky-top">
+        <div class="container-fluid px-4">
+
+            <a class="navbar-brand fw-bold" href="#" onclick="mostrar('dashboard')">
+                <i class="bi bi-heart-pulse-fill"></i>
+                ASOConnect
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="menu">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" onclick="mostrar('dashboard')">
+                            <i class="bi bi-house-door-fill"></i>
+                            Dashboard
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="mostrar('empresa')">
+                            <i class="bi bi-building"></i>
+                            Empresa
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="mostrar('funcionario')">
+                            <i class="bi bi-people-fill"></i>
+                            Funcionários
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="mostrar('aso')">
+                            <i class="bi bi-file-earmark-medical-fill"></i>
+                            ASOs
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="mostrar('relatorios')">
+                            <i class="bi bi-bar-chart-fill"></i>
+                            Relatórios
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    
+    <!---------------- MENU -------------------->
+
+
+    <!---------------- Dashboard ------------------>
+  <section id="dashboard">
+
+    <!-- HERO DASHBOARD -->
+    <div class="hero-dashboard mb-4">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1>{{ session.get("nome", "Administrador") }}</h1>
+                <p>
+                    Acompanhe a saúde ocupacional da sua empresa em tempo real.<br>
+                    Gerencie funcionários, exames e vencimentos com praticidade.
+                </p>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="hero-actions">
+                    <button class="btn-hero btn-white" onclick="mostrar('aso')">
+                        <i class="bi bi-plus-lg"></i>
+                        Novo ASO
+                    </button>
+
+                    <button class="btn-hero btn-outline" onclick="mostrar('funcionario')">
+                        <i class="bi bi-plus-lg"></i>
+                        Novo Funcionário
+                    </button>
+
+                    <button class="btn-hero btn-outline" onclick="mostrar('empresa')">
+                        <i class="bi bi-building-add"></i>
+                        Adicionar Empresa
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CARDS DO DASHBOARD -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card stat-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-box icon-blue me-3">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+
+                    <div>
+                        <h2 class="fw-bold mb-0">{{ total_funcionarios }}</h2>
+                        <h6 class="mb-0">Funcionários</h6>
+                        <small class="text-muted">Cadastrados</small>
+
+                        <br>
+                        <a href="#" onclick="mostrar('relatorios')" class="card-link-blue">
+                            Ver todos <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card stat-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-box icon-green me-3">
+                        <i class="bi bi-heart-pulse-fill"></i>
+                    </div>
+
+                    <div>
+                        <h2 class="fw-bold text-aso-green mb-0">{{ asos_ativos }}</h2>
+                        <h6 class="mb-0">ASOs Ativos</h6>
+                        <small class="text-muted">Exames válidos</small>
+
+                        <br>
+                        <a href="#" onclick="mostrar('relatorios')" class="card-link-green">
+                            Ver todos <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card stat-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-box icon-yellow me-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+
+                    <div>
+                        <h2 class="fw-bold text-warning mb-0">{{ asos_vencendo }}</h2>
+                        <h6 class="mb-0">A Vencer</h6>
+                        <small class="text-muted">Até 30 dias</small>
+
+                        <br>
+                        <a href="#" onclick="mostrar('relatorios')" class="card-link-yellow">
+                            Ver todos <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card stat-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-box icon-red me-3">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </div>
+
+                    <div>
+                        <h2 class="fw-bold text-danger mb-0">{{ asos_vencidos }}</h2>
+                        <h6 class="mb-0">Vencidos</h6>
+                        <small class="text-muted">Renovação necessária</small>
+
+                        <br>
+                        <a href="#" onclick="mostrar('relatorios')" class="card-link-red">
+                            Ver todos <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+ </section>
+
+
+     <!---------------- Dashboard ------------------>
+
+
+        <!--------------- Cadastro EMPRESA ------------>
+
+        <section id="empresa" style="display:none;">
+            <div class="card form-card mb-4">
+                <div class="card-header bg-aso text-white py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-building"></i>
+                        Cadastro de Empresa
+                    </h5>
+                </div>
+
+                <div class="card-body p-4">
+                    <div id="msgEmpresa"></div>
+                    <form action="/empresa" method="POST" id="formEmpresa">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Nome da Empresa</label>
+                                <input type="text" class="form-control" name="Nome_Empresa" placeholder="Nome da Empresa" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">CNPJ</label>
+                                <input type="text" class="form-control" name="CNPJ" placeholder="00.000.000/0000-00" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">E-mail</label>
+                                <input type="email" class="form-control" name="Email" placeholder="empresa@email.com" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Telefone</label>
+                                <input type="text" class="form-control" name="Telefone" placeholder="(31) 99999-9999" required>
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Endereço</label>
+                                <input type="text" class="form-control" name="Endereco" placeholder="Rua, número, bairro e cidade" required>
+                            </div>
+
+                            <div class="col-12 d-flex align-items-end">
+                                <button type="submit" class="btn btn-aso w-100 py-2 rounded-pill">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    Cadastrar Empresa
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!--------------- Cadastro EMPRESA ------------>
+
+
+        <!--------------- Cadastro FUNCIONARIO ------------>
+
+        <section id="funcionario" style="display:none;">
+            <div class="card form-card mb-4">
+                <div class="card-header bg-aso text-white py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-people-fill"></i>
+                        Cadastro de Funcionário
+                    </h5>
+                </div>
+
+                <div class="card-body p-4">
+                    <div id="msgFuncionario"></div>
+                    <form action="/funcionario" method="POST" id="formFuncionario">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Nome Completo</label>
+                                <input type="text" class="form-control" name="Nome" placeholder="Nome Completo" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">CPF</label>
+                                <input type="text" class="form-control" name="CPF" placeholder="CPF" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Data de Nascimento</label>
+                                <input type="date" class="form-control" name="Data_de_nascimento" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Cargo</label>
+                                <input type="text" class="form-control" name="Cargo" placeholder="Cargo" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Setor</label>
+                                <input type="text" class="form-control" name="Setor" placeholder="Setor" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">E-mail</label>
+                                <input type="email" class="form-control" name="Email" placeholder="Email" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Empresa</label>
+                                <select name="ID_empresa" class="form-select" id="selectEmpresaFuncionario" required>
+                                    <option value="">Selecione</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Data de Admissão</label>
+                                <input type="date" class="form-control" name="Data_de_Admissao" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Celular</label>
+                                <input type="text" class="form-control" name="Celular" placeholder="Celular">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">WhatsApp</label>
+                                <input type="text" class="form-control" name="WhatsApp" placeholder="WhatsApp">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Condição</label>
+                                <select name="Condicao" class="form-select">
+                                    <option>ATIVO</option>
+                                    <option>INATIVO</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 d-flex align-items-end">
+                                <button type="submit" class="btn btn-aso w-100 py-2 rounded-pill">
+                                    <i class="bi bi-person-plus-fill"></i>
+                                    Cadastrar Funcionário
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!--------------- Cadastro FUNCIONARIO ------------>
+
+
+        <!------------- Cadastro ASO ------------>
+
+
+        <section id="aso" style="display:none;">
+            <div class="card form-card mb-4">
+                <div class="card-header bg-aso text-white py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-file-earmark-medical-fill"></i>
+                        Cadastro de ASO
+                    </h5>
+                </div>
+
+                <div class="card-body p-4">
+                    <div id="msgAso"></div>
+                    <form action="/aso" method="POST" id="formAso">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Empresa</label>
+                                <select name="ID_empresa" class="form-select" id="selectEmpresaAso" required>
+                                    <option value="">Selecione a empresa</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Funcionário</label>
+                                <select name="id_funcionario" class="form-select" id="selectFuncionarioAso" required>
+                                    <option value="">Selecione o funcionário</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Tipo de Exame</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    name="Tipo_de_Exame"
+                                    list="listaExames"
+                                    placeholder="Digite ou selecione o tipo de exame"
+                                    required>
+
+                                <datalist id="listaExames">
+                                    <option value="Admissional">
+                                    <option value="Periódico">
+                                    <option value="Demissional">
+                                    <option value="Retorno ao Trabalho">
+                                    <option value="Mudança de Função">
+                                </datalist>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Data de Emissão</label>
+                                <input type="date" class="form-control" name="Data_de_Emissao" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Data de Vencimento</label>
+                                <input type="date" class="form-control" name="Data_de_vencimento" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Resultado</label>
+                                <select name="Resultado" class="form-select">
+                                    <option>APROVADO</option>
+                                    <option>REPROVADO</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Médico Responsável</label>
+                                <input type="text" class="form-control" name="Medico_Responsavel" placeholder="Médico">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Condição</label>
+                                <select name="Condicao" class="form-select">
+                                    <option>ATIVO</option>
+                                    <option>INATIVO</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Observação</label>
+                                <textarea name="Observacao" class="form-control" rows="3" placeholder="Observações do ASO"></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-aso w-100 py-2 rounded-pill">
+                                    <i class="bi bi-plus-circle-fill"></i>
+                                    Cadastrar ASO
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+    <!--------------- Cadastro ASO ------------->
+
+    <!--------------- Relatórios ------------>
+
+    
+        <!---------------- Pesquisa e Tabela -------------->
+
+       
+     <!-- FILTRO DE MÊS -->
+
+<section id="relatorios" style="display:none;">
+ <div class="row mb-4">
+    <div class="col-md-4">
+        <label class="form-label fw-semibold">
+            <i class="bi bi-calendar3"></i>
+            Filtrar por ano
+        </label>
+
+        <select id="filtroMesGrafico" class="form-select">
+            <option value="">Todos os anos</option>
+        </select>
+    </div>
+    </div>
+
+
+    <!-- GRÁFICOS -->
+    <div class="row g-4">
+
+    <!-- GRÁFICO DE BARRAS -->
+    <div class="col-lg-8">
+
+        <div class="card grafico-card border-0 shadow-sm rounded-4 h-100">
+
+            <div class="card-body p-4">
+
+                <div class="grafico-cabecalho mb-4">
+
+                    <div class="grafico-icone">
+                        <i class="bi bi-bar-chart-line-fill"></i>
+                    </div>
+
+                    <div>
+                        <h5 class="fw-bold text-aso-blue mb-1">
+                            ASOs emitidos por mês
+                        </h5>
+
+                        <small class="text-muted">
+                            Quantidade mensal separada por tipo de exame
+                        </small>
+                    </div>
+
+                </div>
+
+                <div class="grafico-container">
+                    <canvas id="graficoAsosPorMes"></canvas>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- GRÁFICO DE PIZZA -->
+    <div class="col-lg-4">
+
+        <div class="card grafico-card border-0 shadow-sm rounded-4 h-100">
+
+            <div class="card-body p-4">
+
+                <div class="grafico-cabecalho mb-4">
+
+                    <div class="grafico-icone">
+                        <i class="bi bi-pie-chart-fill"></i>
+                    </div>
+
+                    <div>
+                        <h5 class="fw-bold text-aso-blue mb-1">
+                            Distribuição dos ASOs
+                        </h5>
+
+                        <small class="text-muted">
+                            Total por tipo de exame
+                        </small>
+                    </div>
+
+                </div>
+
+                <div class="grafico-pizza-container">
+                    <canvas id="graficoPizzaAso"></canvas>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    </div>
+
+            <div class="col-md-6">
+                <div class="input-group search-aso">
+                    <span class="input-group-text bg-light border-0">
+                        <i class="bi bi-search text-aso-blue"></i>
+                    </span>
+
+                    <input type="text"
+                           class="form-control border-0 bg-light"
+                           id="buscaAso"
+                           placeholder="Pesquisar por funcionário, exame ou médico...">
+
+                    <button class="btn btn-aso px-4" type="button" id="btnBuscarAso">
+                        Buscar
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="px-4 pb-3 filter-area">
+        <div class="row g-3">
+
+            <div class="col-md-3">
+                <select class="form-select" id="filtroResultado">
+                    <option value="">Todos os resultados</option>
+                    <option>APROVADO</option>
+                    <option>REPROVADO</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <select class="form-select" id="filtroCondicao">
+                    <option value="">Todas as condições</option>
+                    <option>ATIVO</option>
+                    <option>INATIVO</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <select class="form-select" id="filtroTipoExame">
+                    <option value="">Tipo de exame</option>
+                    <option>Admissional</option>
+                    <option>Periódico</option>
+                    <option>Demissional</option>
+                    <option>Retorno ao Trabalho</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <input type="date" class="form-control" id="filtroData">
+            </div>
+
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 aso-table">
+
+            <thead>
+                <tr>
+                    <th class="ps-4">ID</th>
+                    <th>Funcionário</th>
+                    <th>Exame</th>
+                    <th>Emissão</th>
+                    <th>Vencimento</th>
+                    <th>Status</th>
+                    <th>Resultado</th>
+                    <th>Médico</th>
+                    <th class="text-center pe-4">Ações</th>
+                </tr>
+            </thead>
+
+           <tbody id="corpoTabelaAso">
+    {% for aso in lista_asos %}
+    <tr
+        data-nome="{{ aso.Nome_funcionario|lower }}"
+        data-exame="{{ aso.Tipo_de_Exame|lower }}"
+        data-medico="{{ aso.Medico_Responsavel|lower }}"
+        data-resultado="{{ aso.Resultado }}"
+        data-condicao="{{ aso.Condicao }}"
+        data-vencimento="{{ aso.Data_de_vencimento.strftime('%Y-%m-%d') }}"
+    >
+        <td class="ps-4 fw-bold text-muted">
+            #{{ "%03d"|format(aso.ID_ASO) }}
+        </td>
+
+        <td>
+           <div class="fw-bold">{{ aso.Nome_funcionario }}</div>
+    <small class="text-muted">
+    Funcionário
+    </small>
+        </td>
+
+        <td>
+            <span class="fw-semibold">{{ aso.Tipo_de_Exame }}</span>
+        </td>
+
+        <td>{{ aso.Data_de_Emissao.strftime('%d/%m/%Y') }}</td>
+
+        <td>
+            <span class="fw-bold">
+                {{ aso.Data_de_vencimento.strftime('%d/%m/%Y') }}
+            </span>
+        </td>
+
+        <td>
+            <span class="badge bg-primary-subtle text-primary">
+                {{ aso.Condicao }}
+            </span>
+        </td>
+
+        <td>
+            <span class="badge bg-success-subtle text-success">
+                {{ aso.Resultado }}
+            </span>
+        </td>
+
+        <td>{{ aso.Medico_Responsavel }}</td>
+
+
+        <td class="text-center pe-4">
+             {% if aso.Foto %}
+             <a href="{{url_for('static', filename=aso.Foto) }}" 
+             target="_blank"
+             class="btn btn-outline-primary btn-sm">
+             <i class="bi bi-eye-fill"></i>
+             </a>
+             {% else %}
+             <button class="btn btn-outline-secondary btn-sm" disabled>
+             <i class="bi bi-image"></i>
+             </button>
+             {% endif %}
+
+                <a href="/aso/excluir/{{ aso.ID_ASO }}" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-trash-fill"></i>
+                </a>
+            </div>
+        </td>
+    </tr>
+        {% endfor %}
+        </tbody>
+        </table>
+        </div>
+
+        <!---------------- PAGINAÇÃO -------------->
+
+        <div class="card-footer bg-white border-0 py-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+
+        <small class="text-muted">
+            Exibindo {{ lista_asos|length }} de {{ total_registros }} registros
+        </small>
+
+        <ul class="pagination pagination-sm mb-0">
+
+            <li class="page-item {% if pagina == 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('dashboard', pagina=pagina - 1, secao='relatorios') }}#relatorios">
+                    Anterior
+                </a>
+            </li>
+
+            {% for p in range(1, total_paginas + 1) %}
+            <li class="page-item {% if pagina == p %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('dashboard', pagina=p, secao='relatorios') }}#relatorios">
+                    {{ p }}
+                </a>
+            </li>
+            {% endfor %}
+
+            <li class="page-item {% if pagina == total_paginas %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('dashboard', pagina=pagina + 1, secao='relatorios') }}#relatorios">
+                    Próxima
+                </a>
+            </li>
+
+        </ul>
+        </div>
+        </div>
+        <!---------------- PAGINAÇÃO -------------->
+
+        <!---------------- Pesquisa e Tabela -------------->
+
+</section>
+    <!------------- Relatórios ------------>
+
+ 
+   <!---------------- Rodapé NAVEGAÇÃO------------------>
+
+<footer class="footer-premium mt-5">
+    <div class="footer-top-line"></div>
+
+    <div class="container py-5">
+        <div class="row gy-4">
+
+            <div class="col-lg-5">
+                <h3 class="footer-logo">ASOConnect</h3>
+                <p class="footer-premium-text">
+                    Solução digital para gestão de saúde ocupacional, ASOs e colaboradores.
+                </p>
+
+                <div class="d-flex gap-2">
+                    <a href="https://www.instagram.com/asoconnect_?igsh=MXJ1Y2R4cWd4bGdlaw%3D%3D&utm_source=qr" class="premium-social">
+                        <i class="bi bi-instagram"></i>
+                    </a>
+                    <a href="#" class="premium-social">
+                        <i class="bi bi-linkedin"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-3">
+             <h6 class="premium-title">Acesso rápido</h6>
+
+             <a href="#" class="premium-link" onclick="mostrar('dashboard', event); return false;">
+             Dashboard
+             </a>
+             <a href="#" class="premium-link" onclick="mostrar('empresa', event); return false;">
+             Empresas
+             </a>
+              <a href="#" class="premium-link" onclick="mostrar('funcionario', event); return false;">
+             Funcionários
+             </a>
+             <a href="#" class="premium-link" onclick="mostrar('aso', event); return false;">
+             ASOs
+             </a>
+             <a href="#" class="premium-link" onclick="mostrar('relatorios', event); return false;">
+             Relatórios
+             </a>
+            </div>
+
+            <div class="col-lg-4">
+                <h6 class="premium-title">Informações</h6>
+                <p class="footer-premium-text">
+                    <i class="bi bi-envelope-fill text-success"></i>
+                    suporte@asoconnect.com
+                </p>
+                <p class="footer-premium-text">
+                    <i class="bi bi-telephone-fill text-success"></i>
+                    (31) 99523-
+                </p>
+                <p class="footer-premium-text">
+                    <i class="bi bi-shield-check text-success"></i>
+                    Sistema seguro e online
+                </p>
+            </div>
+
+        </div>
+
+        <hr class="premium-hr">
+
+        <div class="d-flex flex-wrap justify-content-between text-muted">
+            <small>©️ 2026 ASOConnect</small>
+            <small>Desenvolvido por Equipe ASOConnect</small>
+        </div>
+    </div>
+</footer>
+
+ <!---------------- Rodapé NAVEGAÇÃO------------------>
+
+
+    <!-------------RODAPÉ---------->
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
+    <script>
+        function mostrar(secao, event = null) {
+    const secoes = ['dashboard', 'empresa', 'funcionario', 'aso', 'relatorios'];
+
+    secoes.forEach(function(id) {
+        const elemento = document.getElementById(id);
+
+        if (elemento) {
+            elemento.style.display = (id === secao) ? 'block' : 'none';
+        }
+    });
+
+    // Remove o active de todos os links da navbar
+    document.querySelectorAll('.navbar .nav-link').forEach(function(link) {
+        link.classList.remove('active');
+    });
+
+    // Adiciona o active apenas na navbar
+    if (event && event.currentTarget.classList.contains('nav-link')) {
+        event.currentTarget.classList.add('active');
+    }
+}
+    </script>
+
+    <script>
+
+    function atualizarDataHora(){
+
+    const agora = new Date();
+
+    document.getElementById("horaAtual").innerHTML =
+        agora.toLocaleTimeString('pt-BR');
+
+    document.getElementById("dataAtual").innerHTML =
+        agora.toLocaleDateString('pt-BR');
+
+}
+
+  setInterval(atualizarDataHora,1000);
+
+    atualizarDataHora();
+
+    </script>
+
+   <script>
+document.addEventListener("DOMContentLoaded", function () {
+    const params = new URLSearchParams(window.location.search);
+    const secao = params.get("secao");
+
+    if (secao) {
+        mostrar(secao);
+    }
+    });
+    </script>
+
+    <script>
+function abrirMenuAdmin(){
+    document.getElementById('adminMenu').classList.toggle('ativo');
+}
+
+document.addEventListener('click', function(event){
+    const area = document.querySelector('.admin-area');
+
+    if (!area.contains(event.target)) {
+        document.getElementById('adminMenu').classList.remove('ativo');
+    }
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script id="dados-grafico-json" type="application/json">
+    {{ dados_grafico | default([]) | tojson }}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const canvasBarras = document.getElementById('graficoAsosPorMes');
+    const canvasPizza = document.getElementById('graficoPizzaAso');
+    const elementoDados = document.getElementById('dados-grafico-json');
+    const filtroMes = document.getElementById('filtroMesGrafico');
+
+    if (!canvasBarras || !canvasPizza || !elementoDados) {
+        return;
+    }
+
+    let dadosGrafico = [];
+
+    try {
+        dadosGrafico = JSON.parse(elementoDados.textContent);
+    } catch (erro) {
+        console.error('Erro ao ler os dados do gráfico:', erro);
+        return;
+    }
+
+    if (!Array.isArray(dadosGrafico) || dadosGrafico.length === 0) {
+        return;
+    }
+
+
+    /* ============================================================
+       PREENCHER FILTRO DE MESES
+    ============================================================ */
+
+    dadosGrafico.forEach(function (item) {
+
+        const opcao = document.createElement('option');
+
+        opcao.value = item.mes;
+        opcao.textContent = item.mes;
+
+        filtroMes.appendChild(opcao);
+
+    });
+
+
+    /* ============================================================
+       VARIÁVEIS DOS GRÁFICOS
+    ============================================================ */
+
+    let graficoBarras;
+    let graficoPizza;
+
+
+    /* ============================================================
+       FUNÇÃO PARA ATUALIZAR OS GRÁFICOS
+    ============================================================ */
+
+    function atualizarGraficos(mesSelecionado = '') {
+
+        let dadosFiltrados = dadosGrafico;
+
+        if (mesSelecionado !== '') {
+
+            dadosFiltrados = dadosGrafico.filter(function (item) {
+                return item.mes === mesSelecionado;
+            });
+
+        }
+
+
+        /* ========================================================
+           DADOS DO GRÁFICO DE BARRAS
+        ======================================================== */
+
+        const meses = dadosFiltrados.map(item => item.mes);
+
+        const admissionais = dadosFiltrados.map(
+            item => Number(item.admissional) || 0
+        );
+
+        const periodicos = dadosFiltrados.map(
+            item => Number(item.periodico) || 0
+        );
+
+        const demissionais = dadosFiltrados.map(
+            item => Number(item.demissional) || 0
+        );
+
+        const retornos = dadosFiltrados.map(
+            item => Number(item.retorno) || 0
+        );
+
+
+        /* ========================================================
+           DADOS DO GRÁFICO DE PIZZA
+        ======================================================== */
+
+        const totalAdmissional = admissionais.reduce(
+            (soma, valor) => soma + valor,
+            0
+        );
+
+        const totalPeriodico = periodicos.reduce(
+            (soma, valor) => soma + valor,
+            0
+        );
+
+        const totalDemissional = demissionais.reduce(
+            (soma, valor) => soma + valor,
+            0
+        );
+
+        const totalRetorno = retornos.reduce(
+            (soma, valor) => soma + valor,
+            0
+        );
+
+
+        /* ========================================================
+           DESTRUIR GRÁFICOS ANTERIORES
+        ======================================================== */
+
+        if (graficoBarras) {
+            graficoBarras.destroy();
+        }
+
+        if (graficoPizza) {
+            graficoPizza.destroy();
+        }
+
+
+        /* ========================================================
+           ESTILO DAS BARRAS
+        ======================================================== */
+
+        const estiloBarra = {
+
+            borderRadius: {
+                topLeft: 12,
+                topRight: 12,
+                bottomLeft: 12,
+                bottomRight: 12
+            },
+
+            borderSkipped: false,
+            inflateAmount: 1,
+            borderWidth: 0,
+            barPercentage: 0.72,
+            categoryPercentage: 0.72
+
+        };
+
+
+        /* ========================================================
+           PLUGIN PARA MOSTRAR TOTAL ACIMA DA BARRA
+        ======================================================== */
+
+        const pluginTotais = {
+
+            id: 'pluginTotais',
+
+            afterDatasetsDraw(chart) {
+
+                const {
+                    ctx,
+                    scales: { x, y }
+                } = chart;
+
+                ctx.save();
+
+                ctx.font = 'bold 13px Arial';
+                ctx.fillStyle = '#334155';
+                ctx.textAlign = 'center';
+
+                chart.data.labels.forEach(function (_, indice) {
+
+                    const total = chart.data.datasets.reduce(
+                        function (soma, dataset) {
+
+                            return soma +
+                                Number(dataset.data[indice] || 0);
+
+                        },
+                        0
+                    );
+
+                    if (total === 0) {
+                        return;
+                    }
+
+                    const posicaoX =
+                        x.getPixelForValue(indice);
+
+                    const posicaoY =
+                        y.getPixelForValue(total);
+
+                    ctx.fillText(
+                        total,
+                        posicaoX,
+                        posicaoY - 10
+                    );
+
+                });
+
+                ctx.restore();
+
+            }
+
+        };
+
+
+        /* ========================================================
+           GRÁFICO DE BARRAS
+        ======================================================== */
+
+        graficoBarras = new Chart(canvasBarras, {
+
+            type: 'bar',
+
+            data: {
+
+                labels: meses,
+
+                datasets: [
+
+                    {
+                        label: 'Admissional',
+                        data: admissionais,
+                        backgroundColor: '#0067b1',
+                        hoverBackgroundColor: '#004f87',
+                        ...estiloBarra
+                    },
+
+                    {
+                        label: 'Periódico',
+                        data: periodicos,
+                        backgroundColor: '#4caf3d',
+                        hoverBackgroundColor: '#2f8b2f',
+                        ...estiloBarra
+                    },
+
+                    {
+                        label: 'Demissional',
+                        data: demissionais,
+                        backgroundColor: '#dc3545',
+                        hoverBackgroundColor: '#b02a37',
+                        ...estiloBarra
+                    },
+
+                    {
+                        label: 'Retorno ao trabalho',
+                        data: retornos,
+                        backgroundColor: '#8b5cf6',
+                        hoverBackgroundColor: '#6d28d9',
+                        ...estiloBarra
+                    }
+
+                ]
+
+            },
+
+            plugins: [pluginTotais],
+
+            options: {
+
+                responsive: true,
+                maintainAspectRatio: false,
+
+                animation: {
+                    duration: 1200,
+                    easing: 'easeOutQuart'
+                },
+
+                layout: {
+
+                    padding: {
+                        top: 28,
+                        right: 15,
+                        bottom: 5,
+                        left: 5
+                    }
+
+                },
+
+                interaction: {
+
+                    mode: 'index',
+                    intersect: false
+
+                },
+
+                plugins: {
+
+                    legend: {
+
+                        position: 'bottom',
+
+                        labels: {
+
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 22,
+                            boxWidth: 10,
+                            boxHeight: 10,
+                            color: '#475569',
+
+                            font: {
+
+                                size: 13,
+                                weight: '500'
+
+                            }
+
+                        }
+
+                    },
+
+                    tooltip: {
+
+                        backgroundColor: '#0f172a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e2e8f0',
+                        footerColor: '#ffffff',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        padding: 14,
+                        cornerRadius: 10,
+                        displayColors: true,
+
+                        callbacks: {
+
+                            label: function (contexto) {
+
+                                return (
+                                    contexto.dataset.label +
+                                    ': ' +
+                                    contexto.parsed.y +
+                                    ' ASO(s)'
+                                );
+
+                            },
+
+                            footer: function (itens) {
+
+                                const total = itens.reduce(
+                                    function (soma, item) {
+
+                                        return soma +
+                                            Number(item.parsed.y || 0);
+
+                                    },
+                                    0
+                                );
+
+                                return 'Total do mês: ' + total;
+
+                            }
+
+                        }
+
+                    }
+
+                },
+
+                scales: {
+
+                    x: {
+
+                        stacked: true,
+
+                        grid: {
+                            display: false
+                        },
+
+                        border: {
+                            display: false
+                        },
+
+                        ticks: {
+
+                            color: '#64748b',
+
+                            font: {
+
+                                size: 12,
+                                weight: '500'
+
+                            }
+
+                        },
+
+                        title: {
+
+                            display: true,
+                            text: 'Mês de emissão',
+                            color: '#475569',
+
+                            font: {
+
+                                size: 13,
+                                weight: '600'
+
+                            },
+
+                            padding: {
+
+                                top: 12
+
+                            }
+
+                        }
+
+                    },
+
+                    y: {
+
+                        stacked: true,
+                        beginAtZero: true,
+                        grace: '15%',
+
+                        grid: {
+
+                            color:
+                                'rgba(148, 163, 184, 0.18)',
+
+                            drawTicks: false
+
+                        },
+
+                        border: {
+
+                            display: false
+
+                        },
+
+                        ticks: {
+
+                            stepSize: 1,
+                            precision: 0,
+                            color: '#64748b',
+                            padding: 10,
+
+                            font: {
+
+                                size: 12
+
+                            }
+
+                        },
+
+                        title: {
+
+                            display: true,
+                            text: 'Quantidade de ASOs',
+                            color: '#475569',
+
+                            font: {
+
+                                size: 13,
+                                weight: '600'
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        });
+
+
+        /* ========================================================
+           GRÁFICO DE PIZZA
+        ======================================================== */
+
+        graficoPizza = new Chart(canvasPizza, {
+
+            type: 'doughnut',
+
+            data: {
+
+                labels: [
+
+                    'Admissional',
+                    'Periódico',
+                    'Demissional',
+                    'Retorno ao trabalho'
+
+                ],
+
+                datasets: [
+
+                    {
+
+                        data: [
+
+                            totalAdmissional,
+                            totalPeriodico,
+                            totalDemissional,
+                            totalRetorno
+
+                        ],
+
+                        backgroundColor: [
+
+                            '#0067b1',
+                            '#4caf3d',
+                            '#dc3545',
+                            '#8b5cf6'
+
+                        ],
+
+                        borderWidth: 3,
+                        borderColor: '#ffffff',
+                        hoverOffset: 8
+
+                    }
+
+                ]
+
+            },
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                cutout: '58%',
+
+                animation: {
+
+                    duration: 1200
+
+                },
+
+                plugins: {
+
+                    legend: {
+
+                        position: 'bottom',
+
+                        labels: {
+
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 16,
+                            boxWidth: 10,
+                            boxHeight: 10,
+                            color: '#475569',
+
+                            font: {
+
+                                size: 12,
+                                weight: '500'
+
+                            }
+
+                        }
+
+                    },
+
+                    tooltip: {
+
+                        backgroundColor: '#0f172a',
+
+                        callbacks: {
+
+                            label: function (contexto) {
+
+                                const valor =
+                                    contexto.raw;
+
+                                const total =
+                                    contexto.dataset.data.reduce(
+                                        (a, b) => a + b,
+                                        0
+                                    );
+
+                                const porcentagem =
+                                    total > 0
+                                        ? ((valor / total) * 100).toFixed(1)
+                                        : 0;
+
+                                return (
+                                    contexto.label +
+                                    ': ' +
+                                    valor +
+                                    ' ASO(s) (' +
+                                    porcentagem +
+                                    '%)'
+                                );
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        });
+
+    }
+
+
+    /* ============================================================
+       FILTRO POR MÊS
+    ============================================================ */
+
+    filtroMes.addEventListener('change', function () {
+
+        atualizarGraficos(this.value);
+
+    });
+
+
+    /* ============================================================
+       INICIAR GRÁFICOS
+    ============================================================ */
+
+    atualizarGraficos();
+
+});
+</script>
+
+
+<!-- ============================================================
+     INTEGRAÇÃO FRONTEND <-> BACKEND (API Flask)
+     ============================================================ -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    function mostrarMensagem(containerId, tipo, texto) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="alert alert-${tipo} alert-dismissible fade show mt-2" role="alert">
+                ${texto}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    }
+
+    async function chamarApi(url, metodo, dados) {
+        const resposta = await fetch(url, {
+            method: metodo,
+            headers: { 'Content-Type': 'application/json' },
+            body: dados ? JSON.stringify(dados) : undefined
+        });
+
+        const corpo = await resposta.json().catch(() => ({}));
+
+        if (!resposta.ok) {
+            throw new Error(corpo.erro || 'Erro ao processar a solicitação.');
+        }
+
+        return corpo;
+    }
+
+    async function carregarEmpresas() {
+        try {
+            const empresas = await chamarApi('/api/empresa', 'GET');
+
+            const selects = [
+                document.getElementById('selectEmpresaFuncionario'),
+                document.getElementById('selectEmpresaAso')
+            ];
+
+            selects.forEach(function (select) {
+                if (!select) return;
+
+                const primeiraOpcao = select.querySelector('option');
+                select.innerHTML = '';
+
+                if (primeiraOpcao) select.appendChild(primeiraOpcao);
+
+                empresas.forEach(function (empresa) {
+                    const opcao = document.createElement('option');
+
+                    opcao.value = empresa.ID_Empresa ?? empresa.id_empresa;
+
+                    opcao.textContent =
+                        empresa.Nome_Empresa ??
+                        empresa.nome_empresa;
+
+                    select.appendChild(opcao);
+                });
+            });
+
+        } catch (erro) {
+            console.error('Erro ao carregar empresas:', erro);
+        }
+    }
+
+    async function carregarFuncionarios() {
+
+        try {
+
+            const funcionarios =
+                await chamarApi('/api/funcionarios', 'GET');
+
+            const select =
+                document.getElementById('selectFuncionarioAso');
+
+            if (!select) return;
+
+            const primeiraOpcao =
+                select.querySelector('option');
+
+            select.innerHTML = '';
+
+            if (primeiraOpcao) {
+                select.appendChild(primeiraOpcao);
+            }
+
+            funcionarios.forEach(function (func) {
+
+                const opcao =
+                    document.createElement('option');
+
+                opcao.value =
+                    func.ID_Funcionarios ??
+                    func.id_funcionarios;
+
+                opcao.textContent =
+                    func.Nome ??
+                    func.nome;
+
+                select.appendChild(opcao);
+
+            });
+
+        } catch (erro) {
+
+            console.error(
+                'Erro ao carregar funcionários:',
+                erro
+            );
+
+        }
+
+    }
+
+    carregarEmpresas();
+    carregarFuncionarios();
+
+    const formEmpresa =
+        document.getElementById('formEmpresa');
+
+    if (formEmpresa) {
+
+        formEmpresa.addEventListener(
+            'submit',
+            async function (evento) {
+
+                evento.preventDefault();
+
+                const dados = {
+
+                    nome_empresa:
+                        formEmpresa.querySelector(
+                            '[name="Nome_Empresa"]'
+                        ).value,
+
+                    cnpj:
+                        formEmpresa.querySelector(
+                            '[name="CNPJ"]'
+                        ).value,
+
+                    email:
+                        formEmpresa.querySelector(
+                            '[name="Email"]'
+                        ).value,
+
+                    telefone:
+                        formEmpresa.querySelector(
+                            '[name="Telefone"]'
+                        ).value,
+
+                    endereco:
+                        formEmpresa.querySelector(
+                            '[name="Endereco"]'
+                        ).value
+
+                };
+
+                try {
+
+                    await chamarApi(
+                        '/api/empresa',
+                        'POST',
+                        dados
+                    );
+
+                    mostrarMensagem(
+                        'msgEmpresa',
+                        'success',
+                        'Empresa cadastrada com sucesso!'
+                    );
+
+                    formEmpresa.reset();
+
+                    carregarEmpresas();
+
+                } catch (erro) {
+
+                    mostrarMensagem(
+                        'msgEmpresa',
+                        'danger',
+                        erro.message
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+    const formFuncionario =
+        document.getElementById('formFuncionario');
+
+    if (formFuncionario) {
+
+        formFuncionario.addEventListener(
+            'submit',
+            async function (evento) {
+
+                evento.preventDefault();
+
+                const dados = {
+
+                    nome:
+                        formFuncionario.querySelector(
+                            '[name="Nome"]'
+                        ).value,
+
+                    cpf:
+                        formFuncionario.querySelector(
+                            '[name="CPF"]'
+                        ).value,
+
+                    data_de_nascimento:
+                        formFuncionario.querySelector(
+                            '[name="Data_de_nascimento"]'
+                        ).value,
+
+                    cargo:
+                        formFuncionario.querySelector(
+                            '[name="Cargo"]'
+                        ).value,
+
+                    setor:
+                        formFuncionario.querySelector(
+                            '[name="Setor"]'
+                        ).value,
+
+                    email:
+                        formFuncionario.querySelector(
+                            '[name="Email"]'
+                        ).value,
+
+                    id_empresa:
+                        formFuncionario.querySelector(
+                            '[name="ID_empresa"]'
+                        ).value,
+
+                    data_de_admissao:
+                        formFuncionario.querySelector(
+                            '[name="Data_de_Admissao"]'
+                        ).value,
+
+                    celular:
+                        formFuncionario.querySelector(
+                            '[name="Celular"]'
+                        ).value,
+
+                    whatsapp:
+                        formFuncionario.querySelector(
+                            '[name="WhatsApp"]'
+                        ).value,
+
+                    condicao:
+                        formFuncionario.querySelector(
+                            '[name="Condicao"]'
+                        ).value
+
+                };
+
+                try {
+
+                    await chamarApi(
+                        '/api/funcionarios',
+                        'POST',
+                        dados
+                    );
+
+                    mostrarMensagem(
+                        'msgFuncionario',
+                        'success',
+                        'Funcionário cadastrado com sucesso!'
+                    );
+
+                    formFuncionario.reset();
+
+                    carregarFuncionarios();
+
+                } catch (erro) {
+
+                    mostrarMensagem(
+                        'msgFuncionario',
+                        'danger',
+                        erro.message
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+    const formAso =
+        document.getElementById('formAso');
+
+    if (formAso) {
+
+        formAso.addEventListener(
+            'submit',
+            async function (evento) {
+
+                evento.preventDefault();
+
+                const dados = {
+
+                    id_funcionario:
+                        formAso.querySelector(
+                            '[name="id_funcionario"]'
+                        ).value,
+
+                    tipo_de_exame:
+                        formAso.querySelector(
+                            '[name="Tipo_de_Exame"]'
+                        ).value,
+
+                    data_de_emissao:
+                        formAso.querySelector(
+                            '[name="Data_de_Emissao"]'
+                        ).value,
+
+                    data_de_vencimento:
+                        formAso.querySelector(
+                            '[name="Data_de_vencimento"]'
+                        ).value,
+
+                    resultado:
+                        formAso.querySelector(
+                            '[name="Resultado"]'
+                        ).value,
+
+                    medico_responsavel:
+                        formAso.querySelector(
+                            '[name="Medico_Responsavel"]'
+                        ).value,
+
+                    condicao:
+                        formAso.querySelector(
+                            '[name="Condicao"]'
+                        ).value,
+
+                    observacao:
+                        formAso.querySelector(
+                            '[name="Observacao"]'
+                        ).value
+
+                };
+
+                try {
+
+                    await chamarApi(
+                        '/api/aso',
+                        'POST',
+                        dados
+                    );
+
+                    mostrarMensagem(
+                        'msgAso',
+                        'success',
+                        'ASO cadastrado com sucesso! Atualizando lista...'
+                    );
+
+                    formAso.reset();
+
+                    setTimeout(
+                        function () {
+
+                            window.location.href =
+                                '/dashboard?secao=relatorios';
+
+                        },
+                        1200
+                    );
+
+                } catch (erro) {
+
+                    mostrarMensagem(
+                        'msgAso',
+                        'danger',
+                        erro.message
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+    function aplicarFiltrosTabela() {
+
+        const termoBusca =
+            (
+                document.getElementById(
+                    'buscaAso'
+                )?.value || ''
+            ).toLowerCase().trim();
+
+        const resultado =
+            document.getElementById(
+                'filtroResultado'
+            )?.value || '';
+
+        const condicao =
+            document.getElementById(
+                'filtroCondicao'
+            )?.value || '';
+
+        const tipoExame =
+            (
+                document.getElementById(
+                    'filtroTipoExame'
+                )?.value || ''
+            ).toLowerCase();
+
+        const dataFiltro =
+            document.getElementById(
+                'filtroData'
+            )?.value || '';
+
+        const linhas =
+            document.querySelectorAll(
+                '#corpoTabelaAso tr'
+            );
+
+        linhas.forEach(function (linha) {
+
+            const nome =
+                linha.dataset.nome || '';
+
+            const exame =
+                linha.dataset.exame || '';
+
+            const medico =
+                linha.dataset.medico || '';
+
+            const linhaResultado =
+                linha.dataset.resultado || '';
+
+            const linhaCondicao =
+                linha.dataset.condicao || '';
+
+            const vencimento =
+                linha.dataset.vencimento || '';
+
+            const bateBusca =
+                !termoBusca ||
+                nome.includes(termoBusca) ||
+                exame.includes(termoBusca) ||
+                medico.includes(termoBusca);
+
+            const bateResultado =
+                !resultado ||
+                linhaResultado === resultado;
+
+            const bateCondicao =
+                !condicao ||
+                linhaCondicao === condicao;
+
+            const bateTipo =
+                !tipoExame ||
+                exame === tipoExame;
+
+            const bateData =
+                !dataFiltro ||
+                vencimento === dataFiltro;
+
+            const visivel =
+                bateBusca &&
+                bateResultado &&
+                bateCondicao &&
+                bateTipo &&
+                bateData;
+
+            linha.style.display =
+                visivel ? '' : 'none';
+
+        });
+
+    }
+
+    document
+        .getElementById('btnBuscarAso')
+        ?.addEventListener(
+            'click',
+            aplicarFiltrosTabela
+        );
+
+    document
+        .getElementById('buscaAso')
+        ?.addEventListener(
+            'keyup',
+            aplicarFiltrosTabela
+        );
+
+    document
+        .getElementById('filtroResultado')
+        ?.addEventListener(
+            'change',
+            aplicarFiltrosTabela
+        );
+
+    document
+        .getElementById('filtroCondicao')
+        ?.addEventListener(
+            'change',
+            aplicarFiltrosTabela
+        );
+
+    document
+        .getElementById('filtroTipoExame')
+        ?.addEventListener(
+            'change',
+            aplicarFiltrosTabela
+        );
+
+    document
+        .getElementById('filtroData')
+        ?.addEventListener(
+            'change',
+            aplicarFiltrosTabela
+        );
+
+});
+</script>
+
+</body>
+</html>  
