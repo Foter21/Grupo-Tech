@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for, session
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash
 import mysql.connector
 import math
 from dotenv import load_dotenv
@@ -753,7 +753,7 @@ def login():
         senha = request.form.get("senha")
 
         # SENHA PADRÃO DO SISTEMA
-        SENHA_PADRAO = "ASO2026@"
+        SENHA_PADRAO = "ASO"
 
         if senha != SENHA_PADRAO:
             return render_template(
@@ -857,16 +857,40 @@ def dashboard():
     if "id_funcionario" not in session:
         return redirect(url_for("login"))
 
-    
     pagina = request.args.get("pagina", 1, type=int)
     registros_por_pagina = 3
-    offset = (pagina - 1) * registros_por_pagina
+
+    resultado_filtro = request.args.get(
+        "resultado",
+        ""
+    ).strip()
+
+    condicao_filtro = request.args.get(
+        "condicao",
+        ""
+    ).strip()
+
+    tipo_exame_filtro = request.args.get(
+        "tipo_exame",
+        ""
+    ).strip()
+
+    data_filtro = request.args.get(
+        "data",
+        ""
+    ).strip()
+
+    if pagina < 1:
+        pagina = 1
 
     conexao = conectar()
     cursor = conexao.cursor(dictionary=True)
 
     # Total de funcionários
-    cursor.execute("SELECT COUNT(*) AS total FROM funcionarios")
+    cursor.execute("""
+        SELECT COUNT(*) AS total
+        FROM funcionarios
+    """)
     total_funcionarios = cursor.fetchone()["total"]
 
     # ASOs ativos
@@ -877,11 +901,12 @@ def dashboard():
     """)
     asos_ativos = cursor.fetchone()["total"]
 
-    # ASOs vencendo nos próximos 30 dias
+    # ASOs vencendo
     cursor.execute("""
         SELECT COUNT(*) AS total
         FROM aso
-        WHERE Data_de_vencimento BETWEEN CURDATE()
+        WHERE Data_de_vencimento
+        BETWEEN CURDATE()
         AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
     """)
     asos_vencendo = cursor.fetchone()["total"]
@@ -894,88 +919,176 @@ def dashboard():
     """)
     asos_vencidos = cursor.fetchone()["total"]
 
-    # Total de registros para paginação
-    cursor.execute("SELECT COUNT(*) AS total FROM aso")
+    condicoes = []
+    parametros = []
+
+    if resultado_filtro:
+        condicoes.append(
+            "UPPER(TRIM(aso.Resultado)) = UPPER(TRIM(%s))"
+        )
+        parametros.append(resultado_filtro)
+
+    if condicao_filtro:
+        condicoes.append(
+            "UPPER(TRIM(aso.Condicao)) = UPPER(TRIM(%s))"
+        )
+        parametros.append(condicao_filtro)
+
+    if tipo_exame_filtro:
+        condicoes.append(
+            "LOWER(TRIM(aso.Tipo_de_Exame)) = LOWER(TRIM(%s))"
+        )
+        parametros.append(tipo_exame_filtro)
+
+    if data_filtro:
+        condicoes.append(
+            "DATE(aso.Data_de_vencimento) = %s"
+        )
+        parametros.append(data_filtro)
+
+    where_sql = ""
+
+    if condicoes:
+        where_sql = " WHERE " + " AND ".join(condicoes)
+
+    # Conta apenas os registros filtrados
+    consulta_total = f"""
+        SELECT COUNT(*) AS total
+        FROM aso
+        INNER JOIN funcionarios
+            ON aso.id_funcionario =
+               funcionarios.ID_Funcionarios
+        {where_sql}
+    """
+
+    cursor.execute(
+        consulta_total,
+        tuple(parametros)
+    )
+
     total_registros = cursor.fetchone()["total"]
 
-    total_paginas = math.ceil(total_registros / registros_por_pagina)
+    total_paginas = math.ceil(
+        total_registros / registros_por_pagina
+    )
 
-    # Lista apenas os registros da página atual
-    cursor.execute("""
-    SELECT
-        aso.*,
-        funcionarios.Nome AS Nome_funcionario,
-        funcionarios.Foto AS Foto
-    FROM aso
-    INNER JOIN funcionarios
-        ON aso.id_funcionario = funcionarios.ID_Funcionarios
-    ORDER BY aso.ID_ASO ASC
-    LIMIT %s OFFSET %s
-    """, (registros_por_pagina, offset))
+    if total_paginas < 1:
+        total_paginas = 1
+
+    if pagina > total_paginas:
+        pagina = total_paginas
+
+    offset = (pagina - 1) * registros_por_pagina
+
+    # Busca os resultados filtrados da página atual
+    consulta_lista = f"""
+        SELECT
+            aso.*,
+            funcionarios.Nome AS Nome_funcionario,
+            funcionarios.Foto AS Foto
+        FROM aso
+        INNER JOIN funcionarios
+            ON aso.id_funcionario =
+               funcionarios.ID_Funcionarios
+        {where_sql}
+        ORDER BY aso.ID_ASO ASC
+        LIMIT %s OFFSET %s
+    """
+
+    parametros_lista = parametros.copy()
+
+    parametros_lista.append(registros_por_pagina)
+    parametros_lista.append(offset)
+
+    cursor.execute(
+        consulta_lista,
+        tuple(parametros_lista)
+    )
 
     lista_asos = cursor.fetchall()
 
-
+    # Gráfico original
     cursor.execute("""
-    SELECT
-        DATE_FORMAT(Data_de_Emissao, '%Y-%m') AS mes_ordem,
-        DATE_FORMAT(Data_de_Emissao, '%m/%Y') AS mes,
+        SELECT
+            DATE_FORMAT(
+                Data_de_Emissao,
+                '%Y-%m'
+            ) AS mes_ordem,
 
-        SUM(
-            CASE
-                WHEN LOWER(TRIM(Tipo_de_Exame)) = 'admissional'
-                THEN 1 ELSE 0
-            END
-        ) AS admissional,
+            DATE_FORMAT(
+                Data_de_Emissao,
+                '%m/%Y'
+            ) AS mes,
 
-        SUM(
-            CASE
-                WHEN LOWER(TRIM(Tipo_de_Exame)) IN ('periodico', 'periódico')
-                THEN 1 ELSE 0
-            END
-        ) AS periodico,
+            SUM(
+                CASE
+                    WHEN LOWER(TRIM(Tipo_de_Exame))
+                         = 'admissional'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS admissional,
 
-        SUM(
-            CASE
-                WHEN LOWER(TRIM(Tipo_de_Exame)) = 'demissional'
-                THEN 1 ELSE 0
-            END
-        ) AS demissional,
+            SUM(
+                CASE
+                    WHEN LOWER(TRIM(Tipo_de_Exame))
+                         IN ('periodico', 'periódico')
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS periodico,
 
-        SUM(
-            CASE
-                WHEN LOWER(TRIM(Tipo_de_Exame)) IN (
-                    'retorno ao trabalho',
-                    'retorno'
-                )
-                THEN 1 ELSE 0
-            END
-        ) AS retorno
+            SUM(
+                CASE
+                    WHEN LOWER(TRIM(Tipo_de_Exame))
+                         = 'demissional'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS demissional,
 
-    FROM aso
+            SUM(
+                CASE
+                    WHEN LOWER(TRIM(Tipo_de_Exame))
+                         IN (
+                            'retorno ao trabalho',
+                            'retorno'
+                         )
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS retorno
 
-    WHERE Data_de_Emissao IS NOT NULL
+        FROM aso
 
-    GROUP BY
-        DATE_FORMAT(Data_de_Emissao, '%Y-%m'),
-        DATE_FORMAT(Data_de_Emissao, '%m/%Y')
+        WHERE Data_de_Emissao IS NOT NULL
 
-    ORDER BY mes_ordem ASC
+        GROUP BY
+            DATE_FORMAT(Data_de_Emissao, '%Y-%m'),
+            DATE_FORMAT(Data_de_Emissao, '%m/%Y')
+
+        ORDER BY mes_ordem ASC
     """)
 
     resultado_grafico = cursor.fetchall()
     dados_grafico = []
 
     for item in resultado_grafico:
-     dados_grafico.append({
-        "mes": item["mes"],
-        "admissional": int(item["admissional"] or 0),
-        "periodico": int(item["periodico"] or 0),
-        "demissional": int(item["demissional"] or 0),
-        "retorno": int(item["retorno"] or 0)
-    })
-
-
+        dados_grafico.append({
+            "mes": item["mes"],
+            "admissional": int(
+                item["admissional"] or 0
+            ),
+            "periodico": int(
+                item["periodico"] or 0
+            ),
+            "demissional": int(
+                item["demissional"] or 0
+            ),
+            "retorno": int(
+                item["retorno"] or 0
+            )
+        })
 
     cursor.close()
     conexao.close()
@@ -991,9 +1104,115 @@ def dashboard():
         total_paginas=total_paginas,
         total_registros=total_registros,
         dados_grafico=dados_grafico,
+        resultado_filtro=resultado_filtro,
+        condicao_filtro=condicao_filtro,
+        tipo_exame_filtro=tipo_exame_filtro,
+        data_filtro=data_filtro,
         nome=session["nome"]
     )
 #----Rota que gera os dados do dashboard na pagina inicial      
+
+
+@app.route('/aso/excluir/<int:id_aso>')
+def excluir_aso(id_aso):
+    conexao = None
+    cursor = None
+
+    try:
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+
+        # Procura o ASO que será excluído
+        cursor.execute("""
+            SELECT *
+            FROM aso
+            WHERE ID_ASO = %s
+        """, (id_aso,))
+
+        aso_excluido = cursor.fetchone()
+
+        if not aso_excluido:
+            flash('ASO não encontrado.', 'warning')
+
+            return redirect(
+                url_for(
+                    'dashboard',
+                    pagina=1,
+                    secao='relatorios',
+                    _anchor='relatorios'
+                )
+            )
+
+        # Copia os dados para o histórico de exclusões
+        cursor.execute("""
+            INSERT INTO registro_exclusao_aso (
+                ID_ASO,
+                id_funcionario,
+                Tipo_de_Exame,
+                Data_de_vencimento,
+                Data_de_Emissao,
+                Resultado,
+                Medico_Responsavel,
+                Observacao,
+                Condicao,
+                Criado_em,
+                Motivo_Exclusao,
+                Usuario_Exclusao
+            )
+            VALUES (
+                %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s
+            )
+        """, (
+            aso_excluido['ID_ASO'],
+            aso_excluido['id_funcionario'],
+            aso_excluido['Tipo_de_Exame'],
+            aso_excluido['Data_de_vencimento'],
+            aso_excluido['Data_de_Emissao'],
+            aso_excluido['Resultado'],
+            aso_excluido['Medico_Responsavel'],
+            aso_excluido['Observacao'],
+            aso_excluido['Condicao'],
+            aso_excluido['Criado_em'],
+            'Exclusão realizada pelo sistema',
+            'Administrador'
+        ))
+
+        # Exclui o ASO da tabela principal
+        cursor.execute("""
+            DELETE FROM aso
+            WHERE ID_ASO = %s
+        """, (id_aso,))
+
+        conexao.commit()
+
+        flash(
+            'ASO excluído e armazenado no histórico com sucesso.',
+            'success'
+        )
+
+    except Exception as erro:
+        if conexao:
+            conexao.rollback()
+
+        print(f'Erro ao excluir ASO: {erro}')
+        flash('Erro ao excluir o ASO.', 'danger')
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if conexao:
+            conexao.close()
+
+    return redirect(
+        url_for(
+            'dashboard',
+            pagina=1,
+            secao='relatorios',
+            _anchor='relatorios'
+        )
+    )
 
 
 if __name__ == '__main__':
