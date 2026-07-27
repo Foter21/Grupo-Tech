@@ -602,61 +602,149 @@
 
     </div>
 
-            <div class="col-md-6">
-                <div class="input-group search-aso">
-                    <span class="input-group-text bg-light border-0">
-                        <i class="bi bi-search text-aso-blue"></i>
-                    </span>
 
-                    <input type="text"
-                           class="form-control border-0 bg-light"
-                           id="buscaAso"
-                           placeholder="Pesquisar por funcionário, exame ou médico...">
+   <!------- TABELA DE ASOS------->>
+<div class="card-header bg-white py-4 border-0">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
 
-                    <button class="btn btn-aso px-4" type="button" id="btnBuscarAso">
-                        Buscar
-                    </button>
-                </div>
-            </div>
+        <h4 class="mb-0 fw-bold text-aso-blue">
+            <i class="bi bi-clipboard2-pulse-fill"></i>
+            Gestão de ASOs
+        </h4>
 
-        </div>
-    </div>
+        <div class="d-flex gap-2">
 
-    <div class="px-4 pb-3 filter-area">
-        <div class="row g-3">
+            <button
+                type="button"
+                class="btn btn-outline-success btn-sm"
+                id="btnExportarCsv"
+            >
+                <i class="bi bi-filetype-csv"></i>
+                CSV
+            </button>
 
-            <div class="col-md-3">
-                <select class="form-select" id="filtroResultado">
-                    <option value="">Todos os resultados</option>
-                    <option>APROVADO</option>
-                    <option>REPROVADO</option>
-                </select>
-            </div>
-
-            <div class="col-md-3">
-                <select class="form-select" id="filtroCondicao">
-                    <option value="">Todas as condições</option>
-                    <option>ATIVO</option>
-                    <option>INATIVO</option>
-                </select>
-            </div>
-
-            <div class="col-md-3">
-                <select class="form-select" id="filtroTipoExame">
-                    <option value="">Tipo de exame</option>
-                    <option>Admissional</option>
-                    <option>Periódico</option>
-                    <option>Demissional</option>
-                    <option>Retorno ao Trabalho</option>
-                </select>
-            </div>
-
-            <div class="col-md-3">
-                <input type="date" class="form-control" id="filtroData">
-            </div>
+            <button
+                type="button"
+                class="btn btn-success btn-sm"
+                id="btnExportarExcel"
+            >
+                <i class="bi bi-file-earmark-excel-fill"></i>
+                Excel
+            </button>
 
         </div>
+
     </div>
+</div>
+
+    <form
+    method="GET"
+    action="{{ url_for('dashboard') }}"
+    id="formFiltrosAso"
+>
+    <input type="hidden" name="pagina" value="1">
+    <input type="hidden" name="secao" value="relatorios">
+
+    <div class="row g-3">
+
+        <div class="col-md-3">
+            <select
+                class="form-select filtro-automatico"
+                id="filtroResultado"
+                name="resultado"
+            >
+                <option value="">Todos os resultados</option>
+
+                <option
+                    value="APROVADO"
+                    {% if resultado_filtro == "APROVADO" %}selected{% endif %}
+                >
+                    APROVADO
+                </option>
+
+                <option
+                    value="REPROVADO"
+                    {% if resultado_filtro == "REPROVADO" %}selected{% endif %}
+                >
+                    REPROVADO
+                </option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <select
+                class="form-select filtro-automatico"
+                id="filtroCondicao"
+                name="condicao"
+            >
+                <option value="">Todas as condições</option>
+
+                <option
+                    value="ATIVO"
+                    {% if condicao_filtro == "ATIVO" %}selected{% endif %}
+                >
+                    ATIVO
+                </option>
+
+                <option
+                    value="INATIVO"
+                    {% if condicao_filtro == "INATIVO" %}selected{% endif %}
+                >
+                    INATIVO
+                </option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <select
+                class="form-select filtro-automatico"
+                id="filtroTipoExame"
+                name="tipo_exame"
+            >
+                <option value="">Todos os exames</option>
+
+                <option
+                    value="Admissional"
+                    {% if tipo_exame_filtro == "Admissional" %}selected{% endif %}
+                >
+                    Admissional
+                </option>
+
+                <option
+                    value="Periodico"
+                    {% if tipo_exame_filtro == "Periodico" %}selected{% endif %}
+                >
+                    Periódico
+                </option>
+
+                <option
+                    value="Demissional"
+                    {% if tipo_exame_filtro == "Demissional" %}selected{% endif %}
+                >
+                    Demissional
+                </option>
+
+                <option
+                    value="Retorno ao trabalho"
+                    {% if tipo_exame_filtro == "Retorno ao trabalho" %}selected{% endif %}
+                >
+                    Retorno ao trabalho
+                </option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <input
+                type="date"
+                class="form-control filtro-automatico"
+                id="filtroData"
+                name="data"
+                value="{{ data_filtro }}"
+            >
+        </div>
+
+    </div>
+</form>
 
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0 aso-table">
@@ -736,9 +824,13 @@
              </button>
              {% endif %}
 
-                <a href="/aso/excluir/{{ aso.ID_ASO }}" class="btn btn-outline-danger btn-sm">
-                    <i class="bi bi-trash-fill"></i>
-                </a>
+              <a href="{{ url_for('excluir_aso', id_aso=aso.ID_ASO) }}"
+                class="btn btn-outline-danger btn-sm"
+                title="Excluir ASO"
+                onclick="return confirm('Deseja realmente excluir este ASO?');">
+
+                <i class="bi bi-trash-fill"></i>
+            </a>
             </div>
         </td>
     </tr>
@@ -747,40 +839,74 @@
         </table>
         </div>
 
+    
         <!---------------- PAGINAÇÃO -------------->
-
-        <div class="card-footer bg-white border-0 py-3">
+<div class="card-footer bg-white border-0 py-3">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
 
         <small class="text-muted">
-            Exibindo {{ lista_asos|length }} de {{ total_registros }} registros
+            Exibindo {{ lista_asos|length }} de
+            {{ total_registros }} registros
         </small>
 
         <ul class="pagination pagination-sm mb-0">
 
-            <li class="page-item {% if pagina == 1 %}disabled{% endif %}">
-                <a class="page-link" href="{{ url_for('dashboard', pagina=pagina - 1, secao='relatorios') }}#relatorios">
+            <li class="page-item {% if pagina <= 1 %}disabled{% endif %}">
+                <a
+                    class="page-link"
+                    href="{{ url_for(
+                        'dashboard',
+                        pagina=pagina - 1,
+                        secao='relatorios',
+                        resultado=resultado_filtro,
+                        condicao=condicao_filtro,
+                        tipo_exame=tipo_exame_filtro,
+                        data=data_filtro
+                    ) }}#relatorios"
+                >
                     Anterior
                 </a>
             </li>
 
             {% for p in range(1, total_paginas + 1) %}
-            <li class="page-item {% if pagina == p %}active{% endif %}">
-                <a class="page-link" href="{{ url_for('dashboard', pagina=p, secao='relatorios') }}#relatorios">
-                    {{ p }}
-                </a>
-            </li>
+                <li class="page-item {% if pagina == p %}active{% endif %}">
+                    <a
+                        class="page-link"
+                        href="{{ url_for(
+                            'dashboard',
+                            pagina=p,
+                            secao='relatorios',
+                            resultado=resultado_filtro,
+                            condicao=condicao_filtro,
+                            tipo_exame=tipo_exame_filtro,
+                            data=data_filtro
+                        ) }}#relatorios"
+                    >
+                        {{ p }}
+                    </a>
+                </li>
             {% endfor %}
 
-            <li class="page-item {% if pagina == total_paginas %}disabled{% endif %}">
-                <a class="page-link" href="{{ url_for('dashboard', pagina=pagina + 1, secao='relatorios') }}#relatorios">
+            <li class="page-item {% if pagina >= total_paginas %}disabled{% endif %}">
+                <a
+                    class="page-link"
+                    href="{{ url_for(
+                        'dashboard',
+                        pagina=pagina + 1,
+                        secao='relatorios',
+                        resultado=resultado_filtro,
+                        condicao=condicao_filtro,
+                        tipo_exame=tipo_exame_filtro,
+                        data=data_filtro
+                    ) }}#relatorios"
+                >
                     Próxima
                 </a>
             </li>
 
         </ul>
-        </div>
-        </div>
+    </div>
+</div>
         <!---------------- PAGINAÇÃO -------------->
 
         <!---------------- Pesquisa e Tabela -------------->
@@ -924,7 +1050,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     </script>
 
-    <script>
+<script>
 function abrirMenuAdmin(){
     document.getElementById('adminMenu').classList.toggle('ativo');
 }
@@ -1569,7 +1695,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     atualizarGraficos();
 
-});
+    });
 </script>
 
 
@@ -2103,6 +2229,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const formulario = document.getElementById('formFiltrosAso');
+    const filtros = document.querySelectorAll('.filtro-automatico');
+
+    filtros.forEach(function (filtro) {
+        filtro.addEventListener('change', function () {
+            formulario.submit();
+        });
+    });
+});
+</script>
+
+
 
 </body>
 </html>  
