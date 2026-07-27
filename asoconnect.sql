@@ -145,6 +145,17 @@ INNER JOIN funcionarios
     ON aso.id_funcionario = funcionarios.ID_Funcionarios
 ORDER BY aso.ID_ASO ASC;
 
+ALTER TABLE registro_exclusao_aso
+
+
+
+ADD COLUMN Data_de_Emissao DATE AFTER Data_de_vencimento,
+ADD COLUMN Resultado VARCHAR(50) AFTER Data_de_Emissao,
+ADD COLUMN Medico_Responsavel VARCHAR(120) AFTER Resultado,
+ADD COLUMN Observacao TEXT AFTER Medico_Responsavel,
+ADD COLUMN Condicao VARCHAR(20) AFTER Observacao,
+ADD COLUMN Criado_em DATETIME AFTER Condicao;
+
 -- Códigos para testar o login:
 -- Código da Empresa = ID_empresa
 -- Código de Acesso = ID_Funcionarios
@@ -159,3 +170,21 @@ INNER JOIN empresa e
 ORDER BY f.ID_Funcionarios ASC
 
 
+create table registro_exclusao_aso (
+    ID_Exclusao INT AUTO_INCREMENT PRIMARY KEY,
+    ID_ASO INT NOT NULL,
+    id_funcionario INT,
+    Tipo_de_Exame VARCHAR(120),
+    Data_de_vencimento DATE,
+    Data_de_Emissao DATE,
+    Resultado VARCHAR(50),
+    Medico_Responsavel VARCHAR(120),
+    Observacao TEXT,
+    Condicao VARCHAR(20),
+    Criado_em DATETIME,
+    Motivo_Exclusao VARCHAR(255),
+    Usuario_Exclusao VARCHAR(120),
+    Data_Exclusao DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+drop table registro_exclusao_aso
