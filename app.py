@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash, Response
 import mysql.connector
 import math
 from dotenv import load_dotenv
@@ -6,6 +6,9 @@ import os
 from twilio.rest import Client
 from datetime import datetime
 from datetime import date, timedelta
+import csv, traceback
+from io import StringIO
+
 
 load_dotenv()
 app = Flask(__name__)
@@ -1115,6 +1118,8 @@ def dashboard():
 
 @app.route('/aso/excluir/<int:id_aso>')
 def excluir_aso(id_aso):
+
+
     conexao = None
     cursor = None
 
@@ -1213,6 +1218,105 @@ def excluir_aso(id_aso):
             _anchor='relatorios'
         )
     )
+
+
+@app.route('/exportar-asos-csv')
+def exportar_asos_csv():
+    cursor = None
+
+    try:
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+
+        sql = """
+            SELECT
+                aso.ID_ASO,
+                funcionarios.Nome AS Nome_funcionario,
+                aso.Tipo_de_Exame,
+                aso.Data_de_Emissao,
+                aso.Data_de_vencimento,
+                aso.Condicao,
+                aso.Resultado,
+                aso.Medico_Responsavel,
+                aso.Observacao
+            FROM aso
+            INNER JOIN funcionarios
+                ON aso.id_funcionario = funcionarios.ID_Funcionarios
+            ORDER BY aso.ID_ASO ASC
+        """
+
+        cursor.execute(sql)
+        registros = cursor.fetchall()
+
+        arquivo = StringIO()
+
+        escritor = csv.writer(
+            arquivo,
+            delimiter=';',
+            quotechar='"',
+            quoting=csv.QUOTE_MINIMAL,
+            lineterminator='\r\n'
+        )
+
+        escritor.writerow([
+            'ID',
+            'Funcionário',
+            'Tipo de exame',
+            'Data de emissão',
+            'Data de vencimento',
+            'Condição',
+            'Resultado',
+            'Médico responsável',
+            'Observação'
+        ])
+
+        for linha in registros:
+            data_emissao = linha.get('Data_de_Emissao')
+            data_vencimento = linha.get('Data_de_vencimento')
+
+            if data_emissao:
+                data_emissao = data_emissao.strftime('%d/%m/%Y')
+            else:
+                data_emissao = ''
+
+            if data_vencimento:
+                data_vencimento = data_vencimento.strftime('%d/%m/%Y')
+            else:
+                data_vencimento = ''
+
+            escritor.writerow([
+                linha.get('ID_ASO', ''),
+                linha.get('Nome_funcionario', ''),
+                linha.get('Tipo_de_Exame', ''),
+                data_emissao,
+                data_vencimento,
+                linha.get('Condicao', ''),
+                linha.get('Resultado', ''),
+                linha.get('Medico_Responsavel', ''),
+                linha.get('Observacao', '') or ''
+            ])
+
+        conteudo_csv = '\ufeff' + arquivo.getvalue()
+
+        resposta = Response(
+            conteudo_csv,
+            mimetype='text/csv; charset=utf-8'
+        )
+
+        resposta.headers['Content-Disposition'] = (
+            'attachment; filename="Relatorio_Completo_ASOs.csv"'
+        )
+
+        return resposta
+
+    except Exception as erro:
+        print('Erro completo da exportação:', repr(erro))
+        return f'Erro ao exportar: {type(erro).__name__}: {erro}', 500
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+
 
 
 if __name__ == '__main__':
